@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <title>ShoeStock</title>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Control de inventario y ventas de calzado" />
+</head>
+
+<body>
+    <header>
+        <h2>ShoeStock</h2>
+        <nav>
+            <a href="index.html">Inicio</a>
+            <a href="ventas.html">Ventas</a>
+            <a href="inventario.html">Inventario</a>
+            <a href="historial.html">Historial</a>
+            <a href="configuracion.html">Configuración</a>
+        </nav>
+        <h2>Usuario: Admin</h2>
+    </header>
+    <main>
+        <h1>Inventario</h1>
+
+        <section>
+            <div>
+                <form>
+                    <input type="text" placeholder="Código único"><br>
+                    <input type="text" placeholder="Nombre del modelo"><br>
+                    <select name="categoria" id="categoria">
+                        <option value="deportivo">Deportivo</option>
+                        <option value="casual">Casual</option>
+                        <option value="formal">Formal</option>
+                        <option value="botin">Botín</option>
+                    </select><br>
+                    <input type="number" placeholder="Precio de compra"><br>
+                    <input type="number" placeholder="Precio de venta"><br>
+                    <input type="number" placeholder="Cantidad en stock"><br>
+                    <button type="submit">Guardar</button>
+                </form>
+            </div>
+
+            <div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>SKU</th>
+                            <th>Categoría</th>
+                            <th>Precio de Compra</th>
+                            <th>Precio de Venta</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Zapato Deportivo</td>
+                            <td>SKU-001</td>
+                            <td>Deportivo</td>
+                            <td>$30.00</td>
+                            <td>$50.00</td>
+                            <td>20</td>
+                            <td><button>Editar</button><button>Eliminar</button></td>
+                        </tr>
+                        <tr>
+                            <td>Botín de Cuero</td>
+                            <td>SKU-002</td>
+                            <td>Casual</td>
+                            <td>$60.00</td>
+                            <td>$80.00</td>
+                            <td>15</td>
+                            <td><button>Editar</button><button>Eliminar</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+</body>
+
+</html>

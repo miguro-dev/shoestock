@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <title>ShoeStock</title>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Control de inventario y ventas de calzado" />
+</head>
+
+<body>
+    <header>
+        <h2>ShoeStock</h2>
+        <nav>
+            <a href="index.html">Inicio</a>
+            <a href="ventas.html">Ventas</a>
+            <a href="inventario.html">Inventario</a>
+            <a href="historial.html">Historial</a>
+            <a href="configuracion.html">Configuración</a>
+        </nav>
+        <h2>Usuario: Admin</h2>
+    </header>
+    <main>
+        <h1>Panel de Control</h1>
+
+        <section>
+            <h2>Usuarios y Roles</h2>
+
+            <div>
+                <form type="submit">
+                    <input type="number" placeholder="Id"><br>
+                    <input type="text" placeholder="Nombre de usuario"><br>
+                    <select name="rol" id="rol">
+                        <option value="vendedor">Vendedor</option>
+                        <option value="administrador">Administrador</option>
+                    </select><br>
+                    <button type="submit">Guardar</button>
+                </form>
+            </div>
+
+            <div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Admin</td>
+                            <td>Administrador</td>
+                            <td>Activo</td>
+                            <td><button>Editar</button><button>Eliminar</button></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Vendedor1</td>
+                            <td>Vendedor</td>
+                            <td>Inactivo</td>
+                            <td><button>Editar</button><button>Eliminar</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+    </main>
+</body>
+
+</html>

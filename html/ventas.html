@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <title>ShoeStock</title>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Control de inventario y ventas de calzado" />
+</head>
+
+<body>
+    <header>
+        <h2>ShoeStock</h2>
+        <nav>
+            <a href="index.html">Inicio</a>
+            <a href="ventas.html">Ventas</a>
+            <a href="inventario.html">Inventario</a>
+            <a href="historial.html">Historial</a>
+            <a href="configuracion.html">Configuración</a>
+        </nav>
+        <h2>Usuario: Admin</h2>
+    </header>
+    <main>
+        <section>
+            <h1>Realizar Venta</h1>
+            <input type="text" placeholder="Buscar producto por id">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>SKU</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Zapato Deportivo</td>
+                        <td>SKU-001</td>
+                        <td>2</td>
+                        <td>$50.00</td>
+                        <td>$100.00</td>
+                    </tr>
+                    <tr>
+                        <td>Botín de Cuero</td>
+                        <td>SKU-002</td>
+                        <td>1</td>
+                        <td>$80.00</td>
+                        <td>$80.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <div>
+                <p>Subtotal: $180.00</p>
+                <p>Descuento: $18.00</p>
+                <p>Total: $162.00</p>
+            </div>
+
+            <div>
+                <button>Registrar Venta</button>
+                <button>Limpiar</button>
+                <button>Imprimir Recibo</button>
+            </div>
+
+            <label for="comentarios">Comentarios:</label>
+            <textarea name="comentarios" id="comentarios" placeholder="Ej: Empaque de regalo"></textarea>
+        </section>
+    </main>
+</body>
+
+</html>
