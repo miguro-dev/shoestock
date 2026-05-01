@@ -1,0 +1,11 @@
+# Ignorar todo por defecto
+*
+
+# Permitir las carpetas del proyecto
+!css/
+!css/**
+!html/
+!html/**
+
+# Permitir el propio .gitignore
+!.gitignore
