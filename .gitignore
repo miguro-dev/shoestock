@@ -6,6 +6,8 @@
 !css/**
 !html/
 !html/**
+!js/
+!js/**
 
 # Permitir el propio .gitignore
 !.gitignore
