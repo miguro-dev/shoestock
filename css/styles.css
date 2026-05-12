@@ -23,20 +23,53 @@ header {
     flex-direction: row;
     align-items: center;
     border-bottom: 3px solid rgb(0, 0, 0, 0.1);
-    justify-content: space-evenly;
-    width: 100%;
+    justify-content: space-between;
+    padding: 1rem 2.5rem;
 
-    a {
-        text-decoration: none;
-        color: var(--text-muted-color);
+    .header-left {
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            letter-spacing: -0.02rem;
+            transition: opacity 0.2s ease;
+
+            &:hover {
+                opacity: 0.7;
+            }
+        }
     }
 
-    a:hover {
-        text-decoration: underline;
+    .header-nav {
+        display: flex;
+        gap: 0.25rem;
+        padding: 4px;
+
+        a {
+            text-decoration: none;
+            color: var(--text-muted-color);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+
+            &:hover {
+                color: var(--primary-color);
+            }
+        }
     }
 
-    h2 {
-        color: var(--primary-color)
+    .header-right {
+        .user-badge {
+            display: flex;
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 10px;
+        }
     }
 }
 
