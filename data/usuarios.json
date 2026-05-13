@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "usuario": "Admin",
+    "rol": "Administrador",
+    "estado": "Activo"
+  },
+  {
+    "id": 2,
+    "usuario": "Vendedor1",
+    "rol": "Vendedor",
+    "estado": "Inactivo"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "ID-001",
+    "fecha": "2024-06-01 10:00",
+    "producto": "Zapato Deportivo",
+    "cantidad": 2,
+    "vendedor": "Admin",
+    "descuento": 18.00,
+    "total": 162.00
+  },
+  {
+    "id": "ID-002",
+    "fecha": "2024-06-01 11:30",
+    "producto": "Botín de Cuero",
+    "cantidad": 1,
+    "vendedor": "Admin",
+    "descuento": 8.00,
+    "total": 72.00
+  }
+]

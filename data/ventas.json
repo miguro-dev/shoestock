@@ -1,0 +1,16 @@
+[
+  {
+    "id": "ID-001",
+    "producto": "Zapato Deportivo",
+    "cantidad": 2,
+    "precioUnitario": 50.00,
+    "total": 100.00
+  },
+  {
+    "id": "ID-002",
+    "producto": "Botín de Cuero",
+    "cantidad": 1,
+    "precioUnitario": 80.00,
+    "total": 80.00
+  }
+]

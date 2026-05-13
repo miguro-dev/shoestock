@@ -8,6 +8,8 @@
 !html/**
 !js/
 !js/**
+!data/
+!data/**
 
 # Permitir el propio .gitignore
 !.gitignore
