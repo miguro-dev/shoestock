@@ -3,16 +3,16 @@
     "id": "ID-001",
     "producto": "Zapato Deportivo",
     "categoria": "Deportivo",
-    "precioCompra": 30.00,
-    "precioVenta": 50.00,
+    "precioCompra": 30000.00,
+    "precioVenta": 50000.00,
     "stock": 20
   },
   {
     "id": "ID-002",
     "producto": "Botín de Cuero",
     "categoria": "Casual",
-    "precioCompra": 60.00,
-    "precioVenta": 80.00,
+    "precioCompra": 60000.00,
+    "precioVenta": 80000.00,
     "stock": 15
   }
 ]

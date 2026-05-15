@@ -1,4 +1,4 @@
-fetch('../data/ventas.json')
+fetch('../data/inventario.json')
     .then(response => response.json())
     .then(productos => {
         const tbody = document.querySelector('.table-section tbody');
@@ -9,9 +9,10 @@ fetch('../data/ventas.json')
             tr.innerHTML = `
                 <td>${producto.id}</td>
                 <td>${producto.producto}</td>
-                <td>${producto.cantidad}</td>
-                <td>$${producto.precioUnitario.toFixed(2)}</td>
-                <td>$${producto.total.toFixed(2)}</td>
+                <td>${producto.categoria}</td>
+                <td>${producto.stock}</td>
+                <td>$${producto.precioVenta.toFixed(2)}</td>
+                <td><button>Agregar</button></td>
             `;
             tbody.appendChild(tr);
         });

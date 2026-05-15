@@ -7,7 +7,7 @@
     <meta name="description" content="Control de inventario y ventas de calzado" />
 
     <link rel="stylesheet" href="/css/styles.css" />
-    <script src="/js/cargar-ventas.js"></script>
+    <script src="/js/cargar-productos.js"></script>
 </head>
 
 <body>
@@ -26,23 +26,30 @@
             <span class="user-badge">Admin</span>
         </div>
     </header>
-    <main>
+    <main class="two-columns">
         <section>
             <h1>Realizar Venta</h1>
-            <input type="text" placeholder="Buscar producto por id">
-            <table class="table-section">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+            <form role="search" class="generic-form">
+                <input type="text" placeholder="Buscar producto por id">
+                <button type="submit">Buscar</button>
+            </form>
+            <div class="table-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Aqui se cargan los produtos dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <section>
