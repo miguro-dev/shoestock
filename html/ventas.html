@@ -28,7 +28,7 @@
     </header>
     <main class="two-columns">
         <section>
-            <h1>Realizar Venta</h1>
+            <h2>Realizar Venta</h2>
             <form role="search" class="generic-form">
                 <input type="text" placeholder="Buscar producto por id">
                 <button type="submit">Buscar</button>
@@ -53,10 +53,23 @@
         </section>
 
         <section>
-            <div>
-                <p>Subtotal: $180.00</p>
-                <p>Descuento: $18.00</p>
-                <p>Total: $162.00</p>
+            <h2>Detalles de venta</h2>
+            <div class="table-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Aqui se cargan los productos seleccionados para la venta -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="sub-total-card">
+                <span>Total: $0.00</span>
             </div>
 
             <div>

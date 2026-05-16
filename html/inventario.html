@@ -7,7 +7,7 @@
     <meta name="description" content="Control de inventario y ventas de calzado" />
 
     <link rel="stylesheet" href="/css/styles.css" />
-    <script src="/js/cargar-inventario.js"></script>
+    <script type="module" src="/js/logica-inventario.js"></script>
 </head>
 
 <body>
@@ -32,18 +32,18 @@
         <section>
             <div>
                 <form class="generic-form">
-                    <input type="text" placeholder="Código único"><br>
-                    <input type="text" placeholder="Nombre del modelo"><br>
-                    <select name="categoria" id="categoria">
+                    <input type="text" name="codigo" placeholder="Código único" required><br>
+                    <input type="text" name="nombre" placeholder="Nombre del modelo" required><br>
+                    <select name="categoria" id="categoria" required>
                         <option value="deportivo">Deportivo</option>
                         <option value="casual">Casual</option>
                         <option value="formal">Formal</option>
                         <option value="botin">Botín</option>
                     </select><br>
-                    <input type="number" placeholder="Precio de compra"><br>
-                    <input type="number" placeholder="Precio de venta"><br>
-                    <input type="number" placeholder="Cantidad en stock"><br>
-                    <button type="submit">Guardar</button>
+                    <input type="number" name="precioCompra" placeholder="Precio de compra" required><br>
+                    <input type="number" name="precioVenta" placeholder="Precio de venta" required><br>
+                    <input type="number" name="stock" placeholder="Cantidad en stock" required><br>
+                    <button type="submit" id="guardar-inventario">Guardar</button>
                 </form>
             </div>
 

@@ -18,3 +18,10 @@ fetch('../data/inventario.json')
             tbody.appendChild(tr);
         });
     });
+
+const form = document.querySelector('.generic-form');
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const datos = Object.fromEntries(new FormData(form));
+    console.log('Datos del producto:', datos);
+});
