@@ -10,7 +10,6 @@ fetch('../data/usuarios.json')
                 <td>${usuario.id}</td>
                 <td>${usuario.usuario}</td>
                 <td>${usuario.rol}</td>
-                <td>${usuario.estado}</td>
                 <td><button>Editar</button><button>Eliminar</button></td>
             `;
             tbody.appendChild(tr);

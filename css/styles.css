@@ -9,6 +9,9 @@
     --text-color: black;
     --text-muted-color: gray;
     --primary-color: #1A237E;
+    --card-bg: #ffffff;
+    --border-color: #d4d8dd;
+    --radius: 8px;
 }
 
 body {
@@ -184,4 +187,138 @@ article {
     padding: 1rem;
     color: white;
     margin-top: 10px;
+}
+
+/* ─── Section header ─── */
+
+.section-header {
+    margin-bottom: 1.25rem;
+
+    h2 {
+        font-size: 1.35rem;
+        color: var(--text-color);
+    }
+
+    .section-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted-color);
+    }
+}
+
+/* ─── Toolbar / Search ─── */
+
+.config-toolbar {
+    margin-bottom: 1rem;
+
+    .search-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        max-width: 320px;
+
+        svg {
+            color: var(--text-muted-color);
+        }
+
+        input {
+            border: none;
+
+            &::placeholder {
+                color: #aaa;
+            }
+        }
+    }
+}
+
+/* ─── Config card (form container) ─── */
+
+.config-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+
+    .config-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+
+        svg {
+            color: var(--primary-color);
+        }
+
+        h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+    }
+}
+
+/* ─── Config form ─── */
+
+.config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted-color);
+            text-transform: uppercase;
+        }
+
+        input,
+        select {
+            padding: 0.55rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.2s ease;
+
+            &:focus {
+                border-color: var(--primary-color);
+            }
+
+            &::placeholder {
+                color: #bbb;
+            }
+        }
+    }
+}
+
+/* ─── Buttons ─── */
+
+.btn-primary {
+    margin-top: 0.25rem;
+    padding: 0.55rem 0.75rem;
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.875rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.88;
+    }
+
+    &:active {
+        opacity: 0.75;
+    }
 }
