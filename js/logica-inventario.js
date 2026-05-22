@@ -24,4 +24,21 @@ form.addEventListener('submit', (e) => {
     e.preventDefault();
     const datos = Object.fromEntries(new FormData(form));
     console.log('Datos del producto:', datos);
+    agregarProducto(datos);
 });
+
+function agregarProducto(producto) {
+    const tbody = document.querySelector('.table-section tbody');
+    const tr = document.createElement('tr');
+
+    tr.innerHTML = `
+        <td>${producto.codigo}</td>
+        <td>${producto.nombre}</td>
+        <td>${producto.categoria}</td>
+        <td>$${parseFloat(producto.precioCompra).toFixed(2)}</td>
+        <td>$${parseFloat(producto.precioVenta).toFixed(2)}</td>
+        <td>${producto.stock}</td>
+        <td><button>Editar</button><button>Eliminar</button></td>
+    `;
+    tbody.appendChild(tr);
+}
