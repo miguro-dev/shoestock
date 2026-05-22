@@ -7,7 +7,7 @@
     <meta name="description" content="Control de inventario y ventas de calzado" />
 
     <link rel="stylesheet" href="/css/styles.css" />
-    <script src="/js/cargar-usuarios.js"></script>
+    <script type="module" src="/js/logica-configuracion.js"></script>
 </head>
 
 <body>
@@ -67,15 +67,15 @@
                 <form class="config-form">
                     <div class="form-group">
                         <label for="user-id">ID</label>
-                        <input type="number" id="user-id" placeholder="001">
+                        <input type="number" id="user-id" name="userId" placeholder="001" required>
                     </div>
                     <div class="form-group">
                         <label for="user-name">Nombre de usuario</label>
-                        <input type="text" id="user-name" placeholder="ej: jperez">
+                        <input type="text" id="user-name" name="userName" placeholder="ej: jperez" required>
                     </div>
                     <div class="form-group">
                         <label for="user-rol">Rol</label>
-                        <select name="rol" id="user-rol">
+                        <select id="user-rol" name="userRol">
                             <option value="vendedor">Vendedor</option>
                             <option value="administrador">Administrador</option>
                         </select>
