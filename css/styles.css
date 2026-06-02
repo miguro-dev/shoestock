@@ -158,28 +158,52 @@ article {
     cursor: pointer;
 }
 
+.table-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
 .table-section table {
     width: 100%;
     border-collapse: collapse;
 }
 
 .table-section th {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, #1a237e, #283593);
     color: white;
-    padding: 0.5rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.85rem 1rem;
+    text-align: left;
 }
 
 .table-section td {
-    padding: 0.5rem;
+    padding: 0.85rem 1rem;
+    font-size: 0.875rem;
+    color: var(--text-color);
     border-bottom: 1px solid #ccc;
+}
+
+.table-section tbody tr:hover td {
+    background: #eef2ff;
+    transition: 0.40s ease;
 }
 
 .table-section button {
     padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
     margin-right: 0.3rem;
-    border: 1px solid #ccc;
-    border-radius: 3px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
     cursor: pointer;
+}
+
+.table-section button:hover {
+    border-color: var(--primary-color);
+    color: #fff;
+    background: var(--primary-color);
 }
 
 .sub-total-card {
