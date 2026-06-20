@@ -250,7 +250,7 @@ header {
 
 /* ─── Add User Button ─── */
 
-.btn-add-user {
+.btn-add {
     display: flex;
     align-items: center;
     gap: 0.4rem;
