@@ -19,8 +19,22 @@ body {
     background-color: var(--background-color);
     color: var(--text-color);
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
+/* Títulos principales */
+h1 {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+h1 + p {
+  margin-bottom: 2rem
+}
+
+/* Header */
 header {
     display: flex;
     flex-direction: row;
@@ -81,13 +95,6 @@ header {
     }
 }
 
-main {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding: 1rem;
-}
-
 .two-columns {
     display: flex;
     flex-direction: row;
@@ -102,16 +109,6 @@ main {
     display: flex;
     flex-direction: row;
     gap: 5px;
-}
-
-article {
-    display: flex;
-    flex-direction: column;
-    font-size: large;
-
-    p {
-        color: black;
-    }
 }
 
 .button-big-style {
@@ -213,22 +210,6 @@ article {
     margin-top: 10px;
 }
 
-/* ─── Section header ─── */
-
-.section-header {
-    margin-bottom: 1.25rem;
-
-    h2 {
-        font-size: 1.35rem;
-        color: var(--text-color);
-    }
-
-    .section-desc {
-        font-size: 0.875rem;
-        color: var(--text-muted-color);
-    }
-}
-
 /* ─── Toolbar / Search ─── */
 
 .config-toolbar {
@@ -242,7 +223,8 @@ article {
         background: var(--card-bg);
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
-        max-width: 320px;
+        max-width: 42rem;
+        width: 100%;
 
         svg {
             color: var(--text-muted-color);
@@ -250,9 +232,10 @@ article {
 
         input {
             border: none;
+            flex: 1;
 
             &::placeholder {
-                color: #aaa;
+                color: var(--text-muted-color);
             }
         }
     }

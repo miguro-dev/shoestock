@@ -29,17 +29,26 @@
 
     <main class="two-columns">
         <section>
-            <div class="section-header">
-                <h2>Usuarios del Sistema</h2>
-                <p class="section-desc">Gestioná los accesos y roles del personal</p>
-            </div>
 
-            <div class="config-toolbar">
-                <div class="search-wrapper">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-6-6"/></svg>
-                    <input type="search" placeholder="Buscar usuario">
+            <h1>Usuarios del Sistema</h1>
+
+            <p>Gestioná los accesos y roles del personal</p>
+
+            <form role="search">
+                <div class="config-toolbar">
+                    <div class="search-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="10" cy="10" r="7" />
+                            <path d="M21 21l-6-6" />
+                        </svg>
+
+                        <input type="search" placeholder="Buscar usuario">
+
+                        <button disabled type="submit">Buscar</button>
+                    </div>
                 </div>
-            </div>
+            </form>
 
             <div class="table-section">
                 <table>
@@ -61,7 +70,13 @@
         <section>
             <div class="config-card">
                 <div class="config-card-header">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0"/><path d="M16 19h6"/><path d="M19 16v6"/><path d="M6 21v-2a4 4 0 0 1 4-4h4"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0" />
+                        <path d="M16 19h6" />
+                        <path d="M19 16v6" />
+                        <path d="M6 21v-2a4 4 0 0 1 4-4h4" />
+                    </svg>
                     <h3>Nuevo Usuario</h3>
                 </div>
                 <form class="config-form">
