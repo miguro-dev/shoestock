@@ -1,3 +1,27 @@
+const overlay = document.getElementById('modalOverlay');
+const btnAdd = document.getElementById('btnAddUser');
+const btnClose = document.getElementById('modalClose');
+const form = document.getElementById('modalForm');
+
+function abrirModal() {
+    overlay.classList.add('active');
+}
+
+function cerrarModal() {
+    overlay.classList.remove('active');
+}
+
+btnAdd.addEventListener('click', abrirModal);
+btnClose.addEventListener('click', cerrarModal);
+
+overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) cerrarModal();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cerrarModal();
+});
+
 fetch('../data/usuarios.json')
     .then(response => response.json())
     .then(usuarios => {
@@ -16,12 +40,12 @@ fetch('../data/usuarios.json')
         });
     });
 
-const form = document.querySelector('.config-form');
 form.addEventListener('submit', (e) => {
     e.preventDefault();
     const datos = Object.fromEntries(new FormData(form));
-    console.log('Datos del usuario:', datos);
     agregarUsuario(datos);
+    cerrarModal();
+    form.reset();
 });
 
 function agregarUsuario(usuario) {
