@@ -30,9 +30,19 @@
         <section>
             <h1>Realizar Venta</h1>
             <p>Selecciona un producto para agregarlo a la venta</p>
-            <form role="search" class="generic-form">
-                <input type="text" placeholder="Buscar producto por id">
-                <button type="submit">Buscar</button>
+
+            <form role="search">
+                <div class="search-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="10" cy="10" r="7" />
+                        <path d="M21 21l-6-6" />
+                    </svg>
+
+                    <input type="text" placeholder="Buscar producto">
+
+                    <button class="btn-primary" disabled type="submit">Buscar</button>
+                </div>
             </form>
             <div class="table-section">
                 <table>

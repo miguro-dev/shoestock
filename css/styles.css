@@ -95,6 +95,10 @@ header {
     }
 }
 
+main > :nth-child(1) {
+    padding: 0.5rem 1rem;
+}
+
 .two-columns {
     display: flex;
     flex-direction: row;
@@ -160,6 +164,7 @@ header {
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
     overflow: hidden;
+    margin-top: 1rem;
 }
 
 .table-section table {
@@ -216,41 +221,42 @@ header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 1rem;
 
     > form {
         flex: 1;
     }
 
-    .search-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0.75rem;
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        max-width: 42rem;
-        width: 100%;
 
-        svg {
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    max-width: 42rem;
+    width: 100%;
+
+    svg {
+        color: var(--text-muted-color);
+    }
+
+    input {
+        border: none;
+        outline: none;
+        flex: 1;
+
+        &::placeholder {
             color: var(--text-muted-color);
         }
+    }
 
-        input {
-            border: none;
-            outline: none;
-            flex: 1;
-
-            &::placeholder {
-                color: var(--text-muted-color);
-            }
-        }
-
-        button:disabled {
-            opacity: .5;
-            pointer-events: none;
-        }
+    button:disabled {
+        opacity: .5;
+        pointer-events: none;
     }
 }
 
