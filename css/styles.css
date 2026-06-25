@@ -239,11 +239,17 @@ header {
 
         input {
             border: none;
+            outline: none;
             flex: 1;
 
             &::placeholder {
                 color: var(--text-muted-color);
             }
+        }
+
+        button:disabled {
+            opacity: .5;
+            pointer-events: none;
         }
     }
 }
