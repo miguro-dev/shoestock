@@ -5,8 +5,8 @@
     "producto": "Zapato Deportivo",
     "cantidad": 2,
     "vendedor": "Admin",
-    "descuento": 18.00,
-    "total": 162.00
+    "descuento": 18,
+    "total": 162
   },
   {
     "id": "ID-002",
@@ -14,7 +14,7 @@
     "producto": "Botín de Cuero",
     "cantidad": 1,
     "vendedor": "Admin",
-    "descuento": 8.00,
-    "total": 72.00
+    "descuento": 8,
+    "total": 72
   }
 ]

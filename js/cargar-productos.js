@@ -11,7 +11,7 @@ fetch('../data/inventario.json')
                 <td>${producto.producto}</td>
                 <td>${producto.categoria}</td>
                 <td>${producto.stock}</td>
-                <td>$${producto.precioVenta.toFixed(2)}</td>
+                <td>$${producto.precioVenta}</td>
                 <td><button>Agregar</button></td>
             `;
             tbody.appendChild(tr);
