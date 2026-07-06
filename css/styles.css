@@ -122,56 +122,7 @@ main> :nth-child(1) {
     }
 }
 
-.big-buttons-section {
-    display: flex;
-    flex-direction: row;
-    gap: 5px;
-}
-
-.button-big-style {
-    color: white;
-    background-color: var(--primary-color);
-    border-style: none;
-    padding: 10px;
-    border-radius: 5px;
-    height: 20vh;
-    width: 40vh;
-    font-size: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    svg {
-        width: 3rem;
-        height: 3rem;
-    }
-}
-
-.button-big-style:hover {
-    opacity: 0.8;
-}
-
-.button-big-style:active {
-    font-size: 1rem;
-}
-
-.generic-form input,
-.generic-form select {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.generic-form button {
-    padding: 0.5rem 1rem;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
+/* Tables */
 .table-section {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -270,31 +221,6 @@ main> :nth-child(1) {
     }
 }
 
-/* ─── Add User Button ─── */
-
-.btn-add {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.55rem 1rem;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--radius);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: opacity 0.2s ease;
-
-    &:hover {
-        opacity: 0.88;
-    }
-
-    &:active {
-        opacity: 0.75;
-    }
-}
-
 /* ─── Modal ─── */
 
 .modal-overlay {
@@ -362,33 +288,6 @@ main> :nth-child(1) {
     }
 }
 
-/* ─── Config card (form container) ─── */
-
-.config-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-
-    .config-card-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1.25rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px solid var(--border-color);
-
-        svg {
-            color: var(--primary-color);
-        }
-
-        h3 {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-    }
-}
-
 /* ─── Config form ─── */
 
 .config-form {
@@ -453,5 +352,30 @@ main> :nth-child(1) {
     &:disabled {
         opacity: 0.5;
         pointer-events: none;
+    }
+}
+
+/* ─── Add User Button ─── */
+
+.btn-add {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.88;
+    }
+
+    &:active {
+        opacity: 0.75;
     }
 }
