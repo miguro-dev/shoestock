@@ -14,7 +14,7 @@ fetch('../data/historial.json')
                 <td>${venta.vendedor}</td>
                 <td>$${venta.descuento.toFixed(2)}</td>
                 <td>$${venta.total.toFixed(2)}</td>
-                <td><button>Ver Detalles</button></td>
+                <td><button class="btn-standard">Ver Detalles</button></td>
             `;
             tbody.appendChild(tr);
         });

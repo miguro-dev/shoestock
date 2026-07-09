@@ -11,6 +11,7 @@
     --primary-color: #1A237E;
     --card-bg: #ffffff;
     --border-color: #d4d8dd;
+    --light-red: #e53935;
     --radius: 8px;
 }
 
@@ -157,19 +158,9 @@ main> :nth-child(1) {
     transition: 0.40s ease;
 }
 
-.table-section button {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.78rem;
-    margin-right: 0.3rem;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.table-section button:hover {
-    border-color: var(--primary-color);
-    color: #fff;
-    background: var(--primary-color);
+.table-section tbody tr td:last-child {
+    display: flex;
+    gap: 0.25rem;
 }
 
 .sub-total-card {
@@ -330,7 +321,7 @@ main> :nth-child(1) {
 
 /* ─── Buttons ─── */
 
-.btn-primary {
+.btn-standard {
     margin-top: 0.25rem;
     padding: 0.55rem 0.75rem;
     background: var(--primary-color);
@@ -355,9 +346,7 @@ main> :nth-child(1) {
     }
 }
 
-/* ─── Add User Button ─── */
-
-.btn-add {
+.btn-icon-text {
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -368,6 +357,26 @@ main> :nth-child(1) {
     border-radius: var(--radius);
     font-size: 0.875rem;
     font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.88;
+    }
+
+    &:active {
+        opacity: 0.75;
+    }
+}
+
+.btn-remove {
+    display: flex;
+    align-items: center;
+    padding: 0.3rem;
+    background: var(--light-red);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
     cursor: pointer;
     transition: opacity 0.2s ease;
 

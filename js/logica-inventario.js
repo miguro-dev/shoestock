@@ -37,7 +37,7 @@ fetch('../data/inventario.json')
                 <td>$${producto.precioCompra.toFixed(2)}</td>
                 <td>$${producto.precioVenta.toFixed(2)}</td>
                 <td>${producto.stock}</td>
-                <td><button>Editar</button><button>Eliminar</button></td>
+                <td><button class="btn-standard">Editar</button><button class="btn-standard">Eliminar</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -62,7 +62,7 @@ function agregarProducto(producto) {
         <td>$${parseFloat(producto.precioCompra).toFixed(2)}</td>
         <td>$${parseFloat(producto.precioVenta).toFixed(2)}</td>
         <td>${producto.stock}</td>
-        <td><button>Editar</button><button>Eliminar</button></td>
+        <td><button class="btn-standard">Editar</button><button class="btn-standard">Eliminar</button></td>
     `;
     tbody.appendChild(tr);
 }

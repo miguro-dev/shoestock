@@ -327,7 +327,7 @@ article {
 
 /* ─── Buttons ─── */
 
-.btn-primary {
+.btn-standard {
     margin-top: 0.25rem;
     padding: 0.55rem 0.75rem;
     background: var(--primary-color);

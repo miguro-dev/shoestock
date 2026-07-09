@@ -34,7 +34,7 @@ fetch('../data/usuarios.json')
                 <td>${usuario.id}</td>
                 <td>${usuario.usuario}</td>
                 <td>${usuario.rol}</td>
-                <td><button>Editar</button><button>Eliminar</button></td>
+                <td><button class="btn-standard">Editar</button><button class="btn-standard">Eliminar</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -56,7 +56,7 @@ function agregarUsuario(usuario) {
         <td>${usuario.userId}</td>
         <td>${usuario.userName}</td>
         <td>${usuario.userRol}</td>
-        <td><button>Editar</button><button>Eliminar</button></td>
+        <td><button class="btn-standard">Editar</button><button class="btn-standard">Eliminar</button></td>
     `;
     tbody.appendChild(tr);
 }
