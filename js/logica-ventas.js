@@ -54,6 +54,25 @@ function agregarAlDetalle(e) {
     `;
     tbody.appendChild(tr);
 
+    tr.querySelector('.btn-remove').addEventListener('click', quitarDelDetalle);
+
+    calcularTotal();
+}
+
+function quitarDelDetalle(e) {
+    const id = e.currentTarget.dataset.id;
+    const tr = e.currentTarget.closest('tr');
+
+    const index = detalle.findIndex(p => p.id === id);
+    if (index !== -1) {
+        detalle.splice(index, 1);
+    }
+
+    tr.remove();
+    calcularTotal();
+}
+
+function calcularTotal() {
     const total = detalle.reduce((sum, p) => sum + p.precioVenta, 0);
     document.querySelector('.sub-total-card span').textContent = `Total: $${total}`;
 }
