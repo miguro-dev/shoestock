@@ -13,3 +13,6 @@
 
 # Permitir el propio .gitignore
 !.gitignore
+
+# Permitir el readme
+!readme.md
