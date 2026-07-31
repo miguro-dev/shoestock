@@ -75,4 +75,5 @@ function quitarDelDetalle(e) {
 function calcularTotal() {
     const total = detalle.reduce((sum, p) => sum + p.precioVenta, 0);
     document.querySelector('.sub-total-card span').textContent = `Total: $${total}`;
+    document.getElementById('btn-registrar-venta').disabled = detalle.length === 0;
 }
