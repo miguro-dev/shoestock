@@ -60,9 +60,10 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Id</th>
-                            <th>Usuario</th>
+                            <th>Nombre Completo</th>
                             <th>Rol</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -92,19 +93,30 @@
             </div>
             <form class="config-form" id="modalForm">
                 <div class="form-group">
-                    <label for="user-id">ID</label>
-                    <input type="number" id="user-id" name="userId" placeholder="001" required>
+                    <label class="form-label" for="user-fullname">Nombre completo</label>
+                    <input type="text" id="user-fullname" name="fullName" placeholder="ej: Juan Pérez" required>
                 </div>
                 <div class="form-group">
-                    <label for="user-name">Nombre de usuario</label>
+                    <label class="form-label" for="user-rol">Rol</label>
+                    <select id="user-rol" name="userRol">
+                        <option value="Vendedor">Vendedor</option>
+                        <option value="Administrador">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="user-name">Nombre de usuario</label>
                     <input type="text" id="user-name" name="userName" placeholder="ej: jperez" required>
                 </div>
                 <div class="form-group">
-                    <label for="user-rol">Rol</label>
-                    <select id="user-rol" name="userRol">
-                        <option value="vendedor">Vendedor</option>
-                        <option value="administrador">Administrador</option>
-                    </select>
+                    <label class="form-label" for="user-password">Contraseña</label>
+                    <input type="password" id="user-password" name="password" placeholder="Mínimo 8 caracteres" minlength="8" required autocomplete="new-password">
+                </div>
+                <div class="form-group form-group-inline">
+                    <span class="form-label">Estado</span>
+                    <label class="check-row">
+                        <input type="checkbox" id="user-active" name="isActive" checked>
+                        <span>Usuario activo</span>
+                    </label>
                 </div>
                 <button type="submit" class="btn-standard">
                     Guardar

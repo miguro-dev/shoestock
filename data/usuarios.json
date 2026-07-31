@@ -1,12 +1,18 @@
 [
   {
     "id": 1,
-    "usuario": "Admin",
-    "rol": "Administrador"
+    "username": "Admin",
+    "full_name": "María Rodríguez",
+    "role": "Administrador",
+    "is_active": true,
+    "created_at": "2026-01-15T09:00:00"
   },
   {
     "id": 2,
-    "usuario": "Vendedor1",
-    "rol": "Vendedor"
+    "username": "Vendedor1",
+    "full_name": "Carlos Gómez",
+    "role": "Vendedor",
+    "is_active": true,
+    "created_at": "2026-02-02T14:30:00"
   }
 ]

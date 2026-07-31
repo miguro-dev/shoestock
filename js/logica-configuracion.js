@@ -31,9 +31,10 @@ fetch('../data/usuarios.json')
         usuarios.forEach(usuario => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${usuario.id}</td>
-                <td>${usuario.usuario}</td>
-                <td>${usuario.rol}</td>
+                <td>${usuario.full_name}</td>
+                <td>${usuario.role}</td>
+                <td>${usuario.username}</td>
+                <td>${estado(usuario.is_active)}</td>
                 <td><button class="btn-standard">Editar</button><button class="btn-standard">Eliminar</button></td>
             `;
             tbody.appendChild(tr);
@@ -48,14 +49,19 @@ form.addEventListener('submit', (e) => {
     form.reset();
 });
 
+function estado(activo) {
+    return activo ? 'Activo' : 'Inactivo';
+}
+
 function agregarUsuario(usuario) {
     const tbody = document.querySelector('.table-section tbody');
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
-        <td>${usuario.userId}</td>
-        <td>${usuario.userName}</td>
+        <td>${usuario.fullName}</td>
         <td>${usuario.userRol}</td>
+        <td>${usuario.userName}</td>
+        <td>${estado(usuario.isActive === 'on')}</td>
         <td><button class="btn-standard">Editar</button><button class="btn-standard">Eliminar</button></td>
     `;
     tbody.appendChild(tr);
