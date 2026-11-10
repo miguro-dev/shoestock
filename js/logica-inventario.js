@@ -1,33 +1,12 @@
-const overlay = document.getElementById('modalOverlay');
-const btnAdd = document.getElementById('btnAddProduct');
-const btnClose = document.getElementById('modalClose');
-const form = document.getElementById('modalForm');
-
-function abrirModal() {
-    overlay.classList.add('active');
-}
-
-function cerrarModal() {
-    overlay.classList.remove('active');
-}
-
-btnAdd.addEventListener('click', abrirModal);
-btnClose.addEventListener('click', cerrarModal);
-
-overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) cerrarModal();
-});
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') cerrarModal();
-});
+// El modal de nuevo producto ahora lo maneja logica-registro-calzado.js
+// Este archivo conserva la carga de la tabla de inventario.
 
 fetch('../data/inventario.json')
     .then(response => response.json())
     .then(productos => {
         const tbody = document.querySelector('.table-section table tbody');
         tbody.innerHTML = '';
-        
+
         productos.forEach(producto => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -37,32 +16,19 @@ fetch('../data/inventario.json')
                 <td>$${producto.precioCompra.toFixed(2)}</td>
                 <td>$${producto.precioVenta.toFixed(2)}</td>
                 <td>${producto.stock}</td>
-                <td><button class="btn-standard">Editar</button><button class="btn-standard">Eliminar</button></td>
+                <td>
+                    <button class="btn-standard">Editar</button>
+                    <button class="btn-remove">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/>
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
+                        </svg>
+                    </button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
     });
-
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const datos = Object.fromEntries(new FormData(form));
-    agregarProducto(datos);
-    cerrarModal();
-    form.reset();
-});
-
-function agregarProducto(producto) {
-    const tbody = document.querySelector('.table-section tbody');
-    const tr = document.createElement('tr');
-
-    tr.innerHTML = `
-        <td>${producto.codigo}</td>
-        <td>${producto.nombre}</td>
-        <td>${producto.categoria}</td>
-        <td>$${parseFloat(producto.precioCompra).toFixed(2)}</td>
-        <td>$${parseFloat(producto.precioVenta).toFixed(2)}</td>
-        <td>${producto.stock}</td>
-        <td><button class="btn-standard">Editar</button><button class="btn-standard">Eliminar</button></td>
-    `;
-    tbody.appendChild(tr);
-}
