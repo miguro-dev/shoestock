@@ -1,37 +1,47 @@
 /**
- * logica-registro-calzado.js
- * Formulario modal de registro de calzado (3 niveles: producto → variante → item)
+ * logica-registro-calzado.js  (version: event delegation ONLY)
+ * Modal form to register footwear (3 levels: product → variant (color) → item (size)).
+ *
+ * Compared with the original file, the ONLY behavioral/structural change is:
+ *   - `adjuntarEventosCard` (per-element listeners, re-attached on every render) is gone.
+ *   - The color list has ONE listener per event type (click, input, change) that dispatches
+ *     by `data-action` / `data-field`, so cards and chips can be re-rendered or added
+ *     without re-binding anything.
+ * Everything else (full-card re-render, validation, payload, texts) is kept as it was.
+ *
+ * Identifiers are in English; HTML ids and CSS class names stay in Spanish because they are
+ * the contract with inventario.html and styles.css.
  */
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+/** Default visible size range (chips shown without expanding). */
+const VISIBLE_SIZE_MIN = 35;
+const VISIBLE_SIZE_MAX = 44;
 
 /**
- * Rango visible por defecto (chips mostrados sin expandir).
- * Cambiar estos valores para ajustar el rango inicial.
+ * Full size range (visible when expanding with "Ver más tallas").
+ * The half size of the maximum (FULL_SIZE_MAX + 0.5) is not offered.
  */
-const VISIBLE_MIN = 35;
-const VISIBLE_MAX = 44;
+const FULL_SIZE_MIN = 20;
+const FULL_SIZE_MAX = 45;
 
-/**
- * Rango completo (visible al expandir con "Ver más tallas").
- * La media talla del máximo (FULL_MAX + 0.5) no se ofrece.
- */
-const FULL_MIN = 20;
-const FULL_MAX = 45;
+/** Every whole size of the full range. */
+const WHOLE_SIZES = Array.from({ length: FULL_SIZE_MAX - FULL_SIZE_MIN + 1 }, (_, index) => index + FULL_SIZE_MIN);
 
-/** Array de todos los números enteros del rango completo. */
-const TALLAS_ENTERAS = Array.from({ length: FULL_MAX - FULL_MIN + 1 }, (_, i) => i + FULL_MIN);
+/** Fields of a size item that are edited from the table. */
+const TABLE_FIELDS = ['stock', 'buy', 'sell', 'barcode'];
 
-const CATEGORIAS = [
-    { id: 1, nombre: 'Deportivo' },
-    { id: 2, nombre: 'Casual' },
-    { id: 3, nombre: 'Formal' },
-    { id: 4, nombre: 'Sandalia' },
-    { id: 5, nombre: 'Bota' },
-    { id: 6, nombre: 'Infantil' },
+const CATEGORIES = [
+    { id: 1, name: 'Deportivo' },
+    { id: 2, name: 'Casual' },
+    { id: 3, name: 'Formal' },
+    { id: 4, name: 'Sandalia' },
+    { id: 5, name: 'Bota' },
+    { id: 6, name: 'Infantil' },
 ];
 
-// ─── Estado del formulario ────────────────────────────────────────────────────
+// ─── Form state ───────────────────────────────────────────────────────────────
 
 /**
  * @typedef {{
@@ -39,8 +49,9 @@ const CATEGORIAS = [
  *   color: string,
  *   imageFile: File|null,
  *   imagePreview: string|null,
- *   sizes: Record<string, { stock: string, buy: string, sell: string, barcode: string }>
- * }} Variante
+ *   sizes: Record<string, { stock: string, buy: string, sell: string, barcode: string }>,
+ *   isExpanded: boolean
+ * }} Variant
  *
  * @typedef {{
  *   name: string,
@@ -48,240 +59,246 @@ const CATEGORIAS = [
  *   hasSizePricing: boolean,
  *   buy: string,
  *   sell: string,
- *   variants: Variante[]
- * }} EstadoFormulario
+ *   variants: Variant[]
+ * }} FormState
  */
 
-/** @type {EstadoFormulario} */
-let estado = crearEstadoInicial();
+/** @type {FormState} */
+let formState = createInitialState();
 
-function crearEstadoInicial() {
+function createInitialState() {
     return {
         name: '',
         categoryId: null,
         hasSizePricing: false,
         buy: '',
         sell: '',
-        variants: [crearVariante()],
+        variants: [createVariant()],
     };
 }
 
-function crearVariante() {
+function createVariant() {
     return {
         id: crypto.randomUUID(),
         color: '',
         imageFile: null,
         imagePreview: null,
         sizes: {},
-        _expandido: false,
+        isExpanded: false,
     };
 }
 
-// ─── Generación de códigos de barra (EAN-13 simulado) ──────────────────────
-
-/**
- * Genera un EAN-13 válido (12 dígitos aleatorios + dígito de control).
- * @returns {string}
- */
-function generarEAN13() {
-    const digitos = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10));
-    const suma = digitos.reduce((acc, d, i) => acc + (i % 2 === 0 ? d : d * 3), 0);
-    const control = (10 - (suma % 10)) % 10;
-    return [...digitos, control].join('');
+function findVariant(variantId) {
+    return formState.variants.find(variant => variant.id === variantId);
 }
 
-/** Devuelve un EAN-13 que no esté ya usado en el formulario. */
-function generarCodigoUnico() {
-    const usados = codigosEnUso();
-    let codigo;
-    do { codigo = generarEAN13(); } while (usados.has(codigo));
-    return codigo;
+// ─── Barcode generation (simulated EAN-13) ────────────────────────────────────
+
+/** Valid EAN-13: 12 random digits + check digit. */
+function generateEan13() {
+    const digits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10));
+    const weightedSum = digits.reduce((sum, digit, index) => sum + (index % 2 === 0 ? digit : digit * 3), 0);
+    const checkDigit = (10 - (weightedSum % 10)) % 10;
+    return [...digits, checkDigit].join('');
 }
 
-/** Recoge todos los códigos de barras usados actualmente en el estado. */
-function codigosEnUso() {
-    const set = new Set();
-    for (const v of estado.variants) {
-        for (const item of Object.values(v.sizes)) {
-            if (item.barcode) set.add(item.barcode);
+/** Returns an EAN-13 that is not already used in the form. */
+function generateUniqueBarcode() {
+    return generateBarcodeAvoiding(collectUsedBarcodes());
+}
+
+/** Returns an EAN-13 that is not in `usedBarcodes` (the caller adds it to the set when looping). */
+function generateBarcodeAvoiding(usedBarcodes) {
+    let barcode;
+    do { barcode = generateEan13(); } while (usedBarcodes.has(barcode));
+    return barcode;
+}
+
+/** Collects every barcode currently in the form state. */
+function collectUsedBarcodes() {
+    const barcodes = new Set();
+    for (const variant of formState.variants) {
+        for (const item of Object.values(variant.sizes)) {
+            if (item.barcode) barcodes.add(item.barcode);
         }
     }
-    return set;
+    return barcodes;
 }
 
-// ─── Formato de tallas ────────────────────────────────────────────────────────
+// ─── Size formatting ──────────────────────────────────────────────────────────
 
-/** Convierte el string canónico "36.5" a la etiqueta visual "36½". */
-function etiquetaTalla(size) {
+/** Canonical string "36.5" → display label "36½". */
+function formatSizeLabel(size) {
     if (String(size).endsWith('.5')) {
         return `${parseInt(size)}½`;
     }
     return String(size);
 }
 
-/** Ordena tallas numéricamente. */
-function ordenarTallas(tallas) {
-    return [...tallas].sort((a, b) => parseFloat(a) - parseFloat(b));
+/** Sorts sizes numerically. */
+function sortSizes(sizes) {
+    return [...sizes].sort((a, b) => parseFloat(a) - parseFloat(b));
 }
 
-// ─── Referencias DOM ──────────────────────────────────────────────────────────
+// ─── DOM references ───────────────────────────────────────────────────────────
 
-const overlay      = document.getElementById('modalCalzadoOverlay');
-const btnCerrar    = document.getElementById('modalCalzadoCerrar');
-const btnAbrir     = document.getElementById('btnAddProduct');
-const toggleEl     = document.getElementById('togglePrecioPorTalla'); // <input type="checkbox">
-const preciosUni   = document.getElementById('preciosUnicos');
-const listaColores = document.getElementById('listaColores');
-const btnAgrColor  = document.getElementById('btnAgregarColor');
-const resumenEl    = document.getElementById('resumenFormulario');
-const errListEl    = document.getElementById('listaErrores');
-const errItemsEl   = document.getElementById('listaErroresItems');
-const btnGuardar   = document.getElementById('btnGuardarCalzado');
-const toastCont    = document.getElementById('toastContenedor');
+const modalOverlay = document.getElementById('modalCalzadoOverlay');
+const closeModalButton = document.getElementById('modalCalzadoCerrar');
+const openModalButton = document.getElementById('btnAddProduct');
+const pricePerSizeCheckbox = document.getElementById('togglePrecioPorTalla'); // <input type="checkbox">
+const singlePriceFields = document.getElementById('preciosUnicos');
+const colorList = document.getElementById('listaColores');
+const addColorButton = document.getElementById('btnAgregarColor');
+const summaryElement = document.getElementById('resumenFormulario');
+const errorListElement = document.getElementById('listaErrores');
+const errorItemsElement = document.getElementById('listaErroresItems');
+const saveButton = document.getElementById('btnGuardarCalzado');
+const toastContainer = document.getElementById('toastContenedor');
 
-// Mini-modal confirmación
-const confirmOverlay  = document.getElementById('confirmOverlay');
-const confirmCancelar = document.getElementById('confirmCancelar');
-const confirmDescartar = document.getElementById('confirmDescartar');
+// Discard-confirmation mini-modal
+const confirmOverlay = document.getElementById('confirmOverlay');
+const confirmKeepEditingButton = document.getElementById('confirmCancelar');
+const confirmDiscardButton = document.getElementById('confirmDescartar');
 
-// ─── Apertura / Cierre del modal ──────────────────────────────────────────────
+// ─── Open / close modal ───────────────────────────────────────────────────────
 
-let focusOrigen = null; // botón que abrió el modal, para devolver el foco
+let elementFocusedBeforeOpen = null; // button that opened the modal, to give the focus back
 
-function abrirModal() {
-    focusOrigen = document.activeElement;
-    estado = crearEstadoInicial();
-    renderTodo();
-    overlay.classList.add('active');
-    // Foco inicial en nombre del modelo
+function openModal() {
+    elementFocusedBeforeOpen = document.activeElement;
+    formState = createInitialState();
+    renderEntireForm();
+    modalOverlay.classList.add('active');
+    // Initial focus on the model name
     requestAnimationFrame(() => {
         document.getElementById('modeloNombre')?.focus();
     });
-    document.addEventListener('keydown', trampaFoco);
+    document.addEventListener('keydown', trapFocus);
 }
 
-function pedirCierre() {
-    if (formularioTieneDatos()) {
+function requestCloseModal() {
+    if (formHasData()) {
         confirmOverlay.classList.add('active');
-        confirmDescartar.focus();
+        confirmDiscardButton.focus();
     } else {
-        cerrarModal();
+        closeModal();
     }
 }
 
-function cerrarModal() {
-    overlay.classList.remove('active');
+function closeModal() {
+    modalOverlay.classList.remove('active');
     confirmOverlay.classList.remove('active');
-    document.removeEventListener('keydown', trampaFoco);
-    focusOrigen?.focus();
+    document.removeEventListener('keydown', trapFocus);
+    elementFocusedBeforeOpen?.focus();
 }
 
-function formularioTieneDatos() {
-    const nombre = document.getElementById('modeloNombre')?.value.trim();
-    if (nombre) return true;
-    for (const v of estado.variants) {
-        if (v.color || Object.keys(v.sizes).length > 0) return true;
+function formHasData() {
+    const modelName = document.getElementById('modeloNombre')?.value.trim();
+    if (modelName) return true;
+    for (const variant of formState.variants) {
+        if (variant.color || Object.keys(variant.sizes).length > 0) return true;
     }
     return false;
 }
 
-// ─── Trampa de foco (accesibilidad) ──────────────────────────────────────────
+// ─── Focus trap (accessibility) ───────────────────────────────────────────────
 
-function trampaFoco(e) {
-    if (e.key === 'Escape') {
-        pedirCierre();
+function trapFocus(event) {
+    if (event.key === 'Escape') {
+        requestCloseModal();
         return;
     }
-    if (e.key !== 'Tab') return;
+    if (event.key !== 'Tab') return;
 
-    // Seleccionar el modal visible más exterior
-    const modalActivo = confirmOverlay.classList.contains('active') ? confirmOverlay : overlay;
-    const focusables = [...modalActivo.querySelectorAll(
+    // Pick the outermost visible dialog
+    const activeDialog = confirmOverlay.classList.contains('active') ? confirmOverlay : modalOverlay;
+    const focusableElements = [...activeDialog.querySelectorAll(
         'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]'
     )];
 
-    if (focusables.length === 0) return;
-    const primero = focusables[0];
-    const ultimo  = focusables[focusables.length - 1];
+    if (focusableElements.length === 0) return;
+    const first = focusableElements[0];
+    const last = focusableElements[focusableElements.length - 1];
 
-    if (e.shiftKey) {
-        if (document.activeElement === primero) {
-            e.preventDefault();
-            ultimo.focus();
+    if (event.shiftKey) {
+        if (document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
         }
     } else {
-        if (document.activeElement === ultimo) {
-            e.preventDefault();
-            primero.focus();
+        if (document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
         }
     }
 }
 
-// ─── Toggle precio por talla ──────────────────────────────────────────────────
+// ─── "Price per size" toggle ──────────────────────────────────────────────────
 
-function actualizarToggle() {
-    const on = estado.hasSizePricing;
-    if (toggleEl) toggleEl.checked = on;
-    preciosUni.style.display = on ? 'none' : 'flex';
+function updatePricingMode() {
+    const isPerSize = formState.hasSizePricing;
+    if (pricePerSizeCheckbox) pricePerSizeCheckbox.checked = isPerSize;
+    singlePriceFields.style.display = isPerSize ? 'none' : 'flex';
 }
 
-// ─── Resumen del footer ───────────────────────────────────────────────────────
+// ─── Footer summary ───────────────────────────────────────────────────────────
 
-function actualizarResumen() {
-    let totalTallas = 0;
-    let totalPares  = 0;
-    const colores   = estado.variants.length;
-    for (const v of estado.variants) {
-        const items = Object.values(v.sizes);
-        totalTallas += items.length;
-        totalPares  += items.reduce((s, i) => s + (parseInt(i.stock) || 0), 0);
+function updateSummary() {
+    let sizeCount = 0;
+    let pairCount = 0;
+    const colorCount = formState.variants.length;
+    for (const variant of formState.variants) {
+        const items = Object.values(variant.sizes);
+        sizeCount += items.length;
+        pairCount += items.reduce((sum, item) => sum + (parseInt(item.stock) || 0), 0);
     }
-    resumenEl.innerHTML =
-        `<strong>${colores}</strong> color${colores !== 1 ? 'es' : ''} · ` +
-        `<strong>${totalTallas}</strong> talla${totalTallas !== 1 ? 's' : ''} · ` +
-        `<strong>${totalPares}</strong> par${totalPares !== 1 ? 'es' : ''}`;
+    summaryElement.innerHTML =
+        `<strong>${colorCount}</strong> color${colorCount !== 1 ? 'es' : ''} · ` +
+        `<strong>${sizeCount}</strong> talla${sizeCount !== 1 ? 's' : ''} · ` +
+        `<strong>${pairCount}</strong> par${pairCount !== 1 ? 'es' : ''}`;
 }
 
-// ─── Render completo ──────────────────────────────────────────────────────────
+// ─── Full render ──────────────────────────────────────────────────────────────
 
-function renderTodo() {
-    // Sincronizar campos del modelo
-    const inputNombre = document.getElementById('modeloNombre');
-    const selCat      = document.getElementById('modeloCategoria');
-    const inputBuy    = document.getElementById('precioCompraUnico');
-    const inputSell   = document.getElementById('precioVentaUnico');
+function renderEntireForm() {
+    // Sync model fields
+    const nameInput = document.getElementById('modeloNombre');
+    const categorySelect = document.getElementById('modeloCategoria');
+    const buyInput = document.getElementById('precioCompraUnico');
+    const sellInput = document.getElementById('precioVentaUnico');
 
-    if (inputNombre) inputNombre.value = estado.name;
-    if (selCat)      selCat.value      = estado.categoryId ?? '';
-    if (inputBuy)    inputBuy.value    = estado.buy;
-    if (inputSell)   inputSell.value   = estado.sell;
+    if (nameInput) nameInput.value = formState.name;
+    if (categorySelect) categorySelect.value = formState.categoryId ?? '';
+    if (buyInput) buyInput.value = formState.buy;
+    if (sellInput) sellInput.value = formState.sell;
 
-    actualizarToggle();
+    updatePricingMode();
+    renderAllColorCards();
+    hideErrors();
+    updateSummary();
+}
 
-    // Renderizar tarjetas de colores
-    listaColores.innerHTML = '';
-    for (const variante of estado.variants) {
-        listaColores.appendChild(crearColorCard(variante));
+function renderAllColorCards() {
+    colorList.innerHTML = '';
+    for (const variant of formState.variants) {
+        colorList.appendChild(createColorCard(variant));
     }
-
-    ocultarErrores();
-    actualizarResumen();
 }
 
-// ─── Tarjeta de color ─────────────────────────────────────────────────────────
+// ─── Color card (markup only: events are handled by the delegated listeners) ──
 
-function crearColorCard(variante) {
+function createColorCard(variant) {
     const card = document.createElement('div');
     card.className = 'color-card';
-    card.dataset.id = variante.id;
+    card.dataset.variantId = variant.id;
 
     card.innerHTML = `
         <div class="color-card-header">
-            <!-- Foto -->
+            <!-- Photo -->
             <button type="button" class="color-foto-btn" aria-label="Subir foto del color"
-                data-foto-btn="${variante.id}">
-                ${variante.imagePreview
-                    ? `<img src="${variante.imagePreview}" alt="Vista previa">`
+                data-action="pick-photo" data-variant-id="${variant.id}">
+                ${variant.imagePreview
+                    ? `<img src="${variant.imagePreview}" alt="Vista previa">`
                     : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round">
@@ -290,17 +307,17 @@ function crearColorCard(variante) {
                         </svg>`}
             </button>
             <input type="file" accept="image/*" class="input-foto-color"
-                id="foto-${variante.id}" data-variante-id="${variante.id}">
+                id="foto-${variant.id}" data-field="photo" data-variant-id="${variant.id}">
 
-            <!-- Nombre del color -->
+            <!-- Color name -->
             <input type="text" class="color-nombre-input" placeholder="Nombre del color (ej: Negro / Rojo)"
-                value="${variante.color}" aria-label="Nombre del color"
-                data-nombre-color="${variante.id}">
+                value="${variant.color}" aria-label="Nombre del color"
+                data-field="color" data-variant-id="${variant.id}">
 
-            <!-- Acciones -->
+            <!-- Actions -->
             <div class="color-acciones">
                 <button type="button" class="btn-icon-sm" title="Duplicar color"
-                    aria-label="Duplicar color" data-duplicar="${variante.id}">
+                    aria-label="Duplicar color" data-action="duplicate-color" data-variant-id="${variant.id}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -309,7 +326,7 @@ function crearColorCard(variante) {
                     </svg>
                 </button>
                 <button type="button" class="btn-icon-sm peligro" title="Quitar color"
-                    aria-label="Quitar color" data-quitar="${variante.id}">
+                    aria-label="Quitar color" data-action="remove-color" data-variant-id="${variant.id}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -320,544 +337,533 @@ function crearColorCard(variante) {
         </div>
 
         <div class="color-card-body">
-            ${renderSelectorTallas(variante)}
-            ${renderTablaTallas(variante)}
+            ${renderSizeSelector(variant)}
+            ${renderSizeTable(variant)}
         </div>
     `;
 
-    adjuntarEventosCard(card, variante);
     return card;
 }
 
-// ─── Selector de tallas ───────────────────────────────────────────────────────
+// ─── Size selector ────────────────────────────────────────────────────────────
 
 /**
- * Devuelve true si alguna talla del Set está fuera del rango visible (VISIBLE_MIN–VISIBLE_MAX).
- * En ese caso hay que mostrar las filas expandidas para que no queden tallas ocultas.
- * @param {Set<string>} tallasActivas
+ * True if any selected size is outside the visible range (VISIBLE_SIZE_MIN–VISIBLE_SIZE_MAX).
+ * In that case the rows must be shown expanded so no selected size stays hidden.
+ * @param {Set<string>} selectedSizes
  */
-function tieneTrallasForaDeRangoVisible(tallasActivas) {
-    for (const key of tallasActivas) {
-        const num = parseFloat(key);
-        const entera = Math.floor(num);
-        if (entera < VISIBLE_MIN || entera > VISIBLE_MAX) return true;
+function hasSizesOutsideVisibleRange(selectedSizes) {
+    for (const size of selectedSizes) {
+        const wholePart = Math.floor(parseFloat(size));
+        if (wholePart < VISIBLE_SIZE_MIN || wholePart > VISIBLE_SIZE_MAX) return true;
     }
     return false;
 }
 
-function renderSelectorTallas(variante) {
-    const tallasActivas = new Set(Object.keys(variante.sizes));
+function renderSizeSelector(variant) {
+    const selectedSizes = new Set(Object.keys(variant.sizes));
 
-    // Si hay tallas fuera del rango visible, expandir automáticamente.
-    // También respeta el toggle manual (_expandido).
-    const expandido = variante._expandido || tieneTrallasForaDeRangoVisible(tallasActivas);
+    // Auto-expand when there are sizes outside the visible range; also honors the manual toggle.
+    const isExpanded = variant.isExpanded || hasSizesOutsideVisibleRange(selectedSizes);
 
-    const rangoEnteras = TALLAS_ENTERAS.filter(t =>
-        expandido ? true : (t >= VISIBLE_MIN && t <= VISIBLE_MAX)
+    const wholeSizesToShow = WHOLE_SIZES.filter(size =>
+        isExpanded ? true : (size >= VISIBLE_SIZE_MIN && size <= VISIBLE_SIZE_MAX)
     );
-    // Las medias tallas del máximo completo (FULL_MAX + 0.5) no se ofrecen
-    const rangoMedias = TALLAS_ENTERAS.filter(t =>
-        expandido ? t < FULL_MAX : (t >= VISIBLE_MIN && t <= VISIBLE_MAX)
+    // The half size of the full maximum (FULL_SIZE_MAX + 0.5) is not offered
+    const halfSizeBasesToShow = WHOLE_SIZES.filter(size =>
+        isExpanded ? size < FULL_SIZE_MAX : (size >= VISIBLE_SIZE_MIN && size <= VISIBLE_SIZE_MAX)
     );
 
-    // Fila 1: chips de tallas enteras (siempre visibles, independientes)
-    const chipsEnteras = rangoEnteras.map(t => {
-        const key    = String(t);
-        const active = tallasActivas.has(key);
+    // Row 1: whole-size chips (independent)
+    const wholeChips = wholeSizesToShow.map(size => {
+        const key = String(size);
+        const isActive = selectedSizes.has(key);
         return `<button type="button" class="chip-talla"
-            aria-pressed="${active}" data-chip="${key}" data-variante="${variante.id}"
+            aria-pressed="${isActive}" data-action="toggle-size" data-variant-id="${variant.id}" data-size="${key}"
             aria-label="Talla ${key}">${key}</button>`;
     }).join('');
 
-    // Fila 2: chips de medias tallas (siempre visibles, completamente independientes)
-    const chipsMedias = rangoMedias.map(t => {
-        const key    = `${t}.5`;
-        const active = tallasActivas.has(key);
-        const label  = `Talla ${t} y medio`;
+    // Row 2: half-size chips (fully independent from the whole sizes)
+    const halfChips = halfSizeBasesToShow.map(size => {
+        const key = `${size}.5`;
+        const isActive = selectedSizes.has(key);
         return `<button type="button" class="chip-talla"
-            aria-pressed="${active}" data-chip="${key}" data-variante="${variante.id}"
-            aria-label="${label}">${etiquetaTalla(key)}</button>`;
+            aria-pressed="${isActive}" data-action="toggle-size" data-variant-id="${variant.id}" data-size="${key}"
+            aria-label="Talla ${size} y medio">${formatSizeLabel(key)}</button>`;
     }).join('');
 
-    // Botón expandir/contraer
-    const btnVerMas = `<button type="button" class="btn-ver-mas-tallas" data-ver-mas="${variante.id}"
-        aria-expanded="${expandido}">
-        ${expandido ? 'Ver menos tallas' : 'Ver más tallas'}
+    // Expand / collapse button
+    const expandButton = `<button type="button" class="btn-ver-mas-tallas"
+        data-action="toggle-expanded" data-variant-id="${variant.id}" aria-expanded="${isExpanded}">
+        ${isExpanded ? 'Ver menos tallas' : 'Ver más tallas'}
     </button>`;
 
-    // Controles de rango: selects con el rango completo
-    const opcionesDesde = TALLAS_ENTERAS.map(t =>
-        `<option value="${t}" ${t === VISIBLE_MIN ? 'selected' : ''}>${t}</option>`
+    // Range controls: selects with the full range
+    const fromOptions = WHOLE_SIZES.map(size =>
+        `<option value="${size}" ${size === VISIBLE_SIZE_MIN ? 'selected' : ''}>${size}</option>`
     ).join('');
-    const opcionesHasta = TALLAS_ENTERAS.map(t =>
-        `<option value="${t}" ${t === VISIBLE_MAX ? 'selected' : ''}>${t}</option>`
+    const toOptions = WHOLE_SIZES.map(size =>
+        `<option value="${size}" ${size === VISIBLE_SIZE_MAX ? 'selected' : ''}>${size}</option>`
     ).join('');
 
     return `
-        <div class="tallas-selector" data-selector="${variante.id}">
+        <div class="tallas-selector">
             <div class="tallas-fila-grupo" role="group" aria-label="Tallas enteras">
                 <span class="tallas-fila-etiqueta">Tallas enteras</span>
-                <div class="tallas-grid">${chipsEnteras}</div>
+                <div class="tallas-grid">${wholeChips}</div>
             </div>
             <div class="tallas-fila-grupo" role="group" aria-label="Medias tallas">
                 <span class="tallas-fila-etiqueta">Medias tallas</span>
-                <div class="tallas-grid tallas-grid">${chipsMedias}</div>
+                <div class="tallas-grid tallas-grid">${halfChips}</div>
             </div>
-            ${btnVerMas}
+            ${expandButton}
             <div class="rango-tallas">
-                <label for="rango-desde-${variante.id}">Desde</label>
-                <select id="rango-desde-${variante.id}" data-rango-desde="${variante.id}">${opcionesDesde}</select>
-                <label for="rango-hasta-${variante.id}">hasta</label>
-                <select id="rango-hasta-${variante.id}" data-rango-hasta="${variante.id}">${opcionesHasta}</select>
+                <label for="rango-desde-${variant.id}">Desde</label>
+                <select id="rango-desde-${variant.id}" data-range-from>${fromOptions}</select>
+                <label for="rango-hasta-${variant.id}">hasta</label>
+                <select id="rango-hasta-${variant.id}" data-range-to>${toOptions}</select>
                 <label class="check-medias">
-                    <input type="checkbox" data-check-medias="${variante.id}"> con medias tallas
+                    <input type="checkbox" data-range-include-halves> con medias tallas
                 </label>
-                <button type="button" class="btn-aplicar-rango" data-aplicar-rango="${variante.id}">
+                <button type="button" class="btn-aplicar-rango" data-action="apply-range"
+                    data-variant-id="${variant.id}">
                     Aplicar rango
                 </button>
             </div>
         </div>`;
 }
 
-// ─── Tabla de tallas ──────────────────────────────────────────────────────────
+// ─── Size table ───────────────────────────────────────────────────────────────
 
-function renderTablaTallas(variante) {
-    const tallasOrdenadas = ordenarTallas(Object.keys(variante.sizes));
-    if (tallasOrdenadas.length === 0) return '';
+function renderSizeTable(variant) {
+    const sortedSizes = sortSizes(Object.keys(variant.sizes));
+    if (sortedSizes.length === 0) return '';
 
-    const conPrecios = estado.hasSizePricing;
+    const showPrices = formState.hasSizePricing;
 
-    const encabezados = conPrecios
+    const headers = showPrices
         ? `<th>Talla</th><th>Stock</th><th>Compra</th><th>Venta</th><th>Código de barras</th>`
         : `<th>Talla</th><th>Stock</th><th>Código de barras</th>`;
 
-    const filas = tallasOrdenadas.map(size => {
-        const item = variante.sizes[size];
-        const preciosCols = conPrecios
+    const rows = sortedSizes.map(size => {
+        const item = variant.sizes[size];
+        const priceCells = showPrices
             ? `<td><input type="number" class="input-tabla" value="${item.buy}"
                     placeholder="0" min="0" step="1"
-                    aria-label="Precio compra talla ${etiquetaTalla(size)}"
-                    data-campo="buy" data-variante="${variante.id}" data-size="${size}"></td>
+                    aria-label="Precio compra talla ${formatSizeLabel(size)}"
+                    data-field="buy" data-variant-id="${variant.id}" data-size="${size}"></td>
                <td><input type="number" class="input-tabla" value="${item.sell}"
                     placeholder="0" min="0" step="1"
-                    aria-label="Precio venta talla ${etiquetaTalla(size)}"
-                    data-campo="sell" data-variante="${variante.id}" data-size="${size}"></td>`
+                    aria-label="Precio venta talla ${formatSizeLabel(size)}"
+                    data-field="sell" data-variant-id="${variant.id}" data-size="${size}"></td>`
             : '';
         return `<tr>
-            <td><span class="talla-tag">${etiquetaTalla(size)}</span></td>
+            <td><span class="talla-tag">${formatSizeLabel(size)}</span></td>
             <td><input type="number" class="input-tabla" value="${item.stock}"
                     placeholder="0" min="0" step="1"
-                    aria-label="Stock talla ${etiquetaTalla(size)}"
-                    data-campo="stock" data-variante="${variante.id}" data-size="${size}"></td>
-            ${preciosCols}
+                    aria-label="Stock talla ${formatSizeLabel(size)}"
+                    data-field="stock" data-variant-id="${variant.id}" data-size="${size}"></td>
+            ${priceCells}
             <td><input type="text" class="input-tabla" value="${item.barcode}"
                     placeholder="Código de barras"
-                    aria-label="Código de barras talla ${etiquetaTalla(size)}"
-                    data-campo="barcode" data-variante="${variante.id}" data-size="${size}"
+                    aria-label="Código de barras talla ${formatSizeLabel(size)}"
+                    data-field="barcode" data-variant-id="${variant.id}" data-size="${size}"
                     maxlength="50"></td>
         </tr>`;
     }).join('');
 
-    // Control "Mismo stock para todas"
-    const mismoStock = `
+    // "Same stock for all" control
+    const sameStockRow = `
         <div class="mismo-stock-row">
             <span>Mismo stock para todas:</span>
             <input type="number" placeholder="0" min="0" step="1"
-                id="mismo-stock-val-${variante.id}" aria-label="Valor de stock para todas las tallas">
-            <button type="button" data-aplicar-stock="${variante.id}">Aplicar</button>
+                id="mismo-stock-val-${variant.id}" aria-label="Valor de stock para todas las tallas">
+            <button type="button" data-action="apply-same-stock" data-variant-id="${variant.id}">Aplicar</button>
         </div>`;
 
     return `
-        ${mismoStock}
+        ${sameStockRow}
         <div class="tabla-tallas-wrapper">
             <table class="tabla-tallas" aria-label="Tallas y stock de este color">
-                <thead><tr>${encabezados}</tr></thead>
-                <tbody>${filas}</tbody>
+                <thead><tr>${headers}</tr></thead>
+                <tbody>${rows}</tbody>
             </table>
         </div>`;
 }
 
-// ─── Renderizado parcial de una card ──────────────────────────────────────────
+// ─── Re-render one card ───────────────────────────────────────────────────────
 
-function rerenderCard(varianteId) {
-    const variante = estado.variants.find(v => v.id === varianteId);
-    if (!variante) return;
-    const cardExistente = listaColores.querySelector(`[data-id="${varianteId}"]`);
-    if (!cardExistente) return;
-    const nuevaCard = crearColorCard(variante);
-    listaColores.replaceChild(nuevaCard, cardExistente);
-    actualizarResumen();
+function rerenderCard(variantId) {
+    const variant = findVariant(variantId);
+    if (!variant) return;
+    const existingCard = getCardElement(variantId);
+    if (!existingCard) return;
+    // No listeners to re-attach: the delegated ones on #listaColores keep working.
+    colorList.replaceChild(createColorCard(variant), existingCard);
+    updateSummary();
 }
 
-// ─── Eventos de la tarjeta de color ──────────────────────────────────────────
+function getCardElement(variantId) {
+    return colorList.querySelector(`.color-card[data-variant-id="${variantId}"]`);
+}
 
-function adjuntarEventosCard(card, variante) {
-    // Foto
-    const fotoBtnEl = card.querySelector(`[data-foto-btn="${variante.id}"]`);
-    const inputFoto = card.querySelector(`#foto-${variante.id}`);
-    fotoBtnEl.addEventListener('click', () => inputFoto.click());
-    inputFoto.addEventListener('change', (e) => {
-        const file = e.target.files[0];
+function getColorNameInput(variantId) {
+    return colorList.querySelector(`[data-field="color"][data-variant-id="${variantId}"]`);
+}
+
+// ─── Event delegation: one listener per event type for the whole color list ───
+
+/** Buttons: dispatches by `data-action`. */
+function handleColorListClick(event) {
+    const actionElement = event.target.closest('[data-action]');
+    if (!actionElement || !colorList.contains(actionElement)) return;
+
+    const { action, variantId, size } = actionElement.dataset;
+    const variant = findVariant(variantId);
+    if (!variant) return;
+
+    switch (action) {
+        case 'pick-photo':
+            document.getElementById(`foto-${variantId}`).click();
+            break;
+        case 'duplicate-color':
+            duplicateVariant(variantId);
+            break;
+        case 'remove-color':
+            removeVariant(variantId);
+            break;
+        case 'toggle-size':
+            toggleSize(variantId, size);
+            break;
+        case 'toggle-expanded':
+            variant.isExpanded = !variant.isExpanded;
+            rerenderCard(variantId);
+            break;
+        case 'apply-range':
+            applySizeRange(variantId, getCardElement(variantId));
+            break;
+        case 'apply-same-stock':
+            applySameStock(variantId);
+            break;
+    }
+}
+
+/** Color name: updates the state while typing. */
+function handleColorListInput(event) {
+    const { field, variantId } = event.target.dataset;
+    if (field !== 'color') return;
+    const variant = findVariant(variantId);
+    if (variant) variant.color = event.target.value;
+}
+
+/** Table inputs and photo input: dispatches by `data-field`. */
+function handleColorListChange(event) {
+    const input = event.target;
+    const { field, variantId, size } = input.dataset;
+    const variant = findVariant(variantId);
+    if (!field || !variant) return;
+
+    if (field === 'photo') {
+        const file = input.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            variante.imageFile    = file;
-            variante.imagePreview = ev.target.result;
-            rerenderCard(variante.id);
+        reader.onload = loadEvent => {
+            variant.imageFile = file;
+            variant.imagePreview = loadEvent.target.result;
+            rerenderCard(variant.id);
         };
         reader.readAsDataURL(file);
-    });
-
-    // Nombre del color
-    card.querySelector(`[data-nombre-color="${variante.id}"]`)
-        .addEventListener('input', (e) => {
-            variante.color = e.target.value;
-        });
-
-    // Duplicar
-    card.querySelector(`[data-duplicar="${variante.id}"]`)
-        .addEventListener('click', () => duplicarVariante(variante.id));
-
-    // Quitar
-    card.querySelector(`[data-quitar="${variante.id}"]`)
-        .addEventListener('click', () => quitarVariante(variante.id));
-
-    // Chips de talla
-    card.querySelectorAll(`[data-chip]`).forEach(chip => {
-        chip.addEventListener('click', () => {
-            const size = chip.dataset.chip;
-            const vid  = chip.dataset.variante;
-            toggleTalla(vid, size);
-        });
-    });
-
-    // Ver más / ver menos tallas
-    const btnVerMas = card.querySelector(`[data-ver-mas="${variante.id}"]`);
-    if (btnVerMas) {
-        btnVerMas.addEventListener('click', () => {
-            // Guardamos el estado de expansión en el objeto variante para que
-            // rerenderCard lo respete. Usamos un campo auxiliar no persistido.
-            variante._expandido = !variante._expandido;
-            rerenderCard(variante.id);
-        });
+        return;
     }
 
-    // Aplicar rango
-    const btnRango = card.querySelector(`[data-aplicar-rango="${variante.id}"]`);
-    if (btnRango) {
-        btnRango.addEventListener('click', () => aplicarRango(variante.id, card));
-    }
-
-    // Campos de la tabla
-    card.querySelectorAll('[data-campo]').forEach(input => {
-        input.addEventListener('change', (e) => {
-            const { campo, variante: vid, size } = e.target.dataset;
-            const v = estado.variants.find(x => x.id === vid);
-            if (!v || !v.sizes[size]) return;
-            v.sizes[size][campo] = e.target.value;
-            actualizarResumen();
-        });
-    });
-
-    // Mismo stock para todas
-    const btnMismoStock = card.querySelector(`[data-aplicar-stock="${variante.id}"]`);
-    if (btnMismoStock) {
-        btnMismoStock.addEventListener('click', () => {
-            const val = document.getElementById(`mismo-stock-val-${variante.id}`)?.value || '0';
-            for (const size of Object.keys(variante.sizes)) {
-                variante.sizes[size].stock = val;
-            }
-            rerenderCard(variante.id);
-        });
+    if (TABLE_FIELDS.includes(field) && variant.sizes[size]) {
+        variant.sizes[size][field] = input.value;
+        updateSummary();
     }
 }
 
-// ─── Operaciones sobre tallas ─────────────────────────────────────────────────
+// ─── Size operations ──────────────────────────────────────────────────────────
 
-function toggleTalla(varianteId, size) {
-    const v = estado.variants.find(x => x.id === varianteId);
-    if (!v) return;
+function toggleSize(variantId, size) {
+    const variant = findVariant(variantId);
+    if (!variant) return;
 
-    if (v.sizes[size]) {
-        // Quitar talla
-        delete v.sizes[size];
+    if (variant.sizes[size]) {
+        // Remove size
+        delete variant.sizes[size];
     } else {
-        // Agregar talla con barcode autogenerado
-        v.sizes[size] = { stock: '0', buy: '', sell: '', barcode: generarCodigoUnico() };
+        // Add size with an auto-generated barcode
+        variant.sizes[size] = { stock: '0', buy: '', sell: '', barcode: generateUniqueBarcode() };
     }
-    rerenderCard(varianteId);
+    rerenderCard(variantId);
 }
 
-function aplicarRango(varianteId, card) {
-    const desde     = parseInt(card.querySelector(`[data-rango-desde="${varianteId}"]`).value);
-    const hasta     = parseInt(card.querySelector(`[data-rango-hasta="${varianteId}"]`).value);
-    const conMedias = card.querySelector(`[data-check-medias="${varianteId}"]`).checked;
+function applySizeRange(variantId, card) {
+    const from = parseInt(card.querySelector('[data-range-from]').value);
+    const to = parseInt(card.querySelector('[data-range-to]').value);
+    const includeHalves = card.querySelector('[data-range-include-halves]').checked;
 
-    if (desde > hasta) return;
+    if (from > to) return;
 
-    const v = estado.variants.find(x => x.id === varianteId);
-    if (!v) return;
+    const variant = findVariant(variantId);
+    if (!variant) return;
 
-    const usados = codigosEnUso();
+    const usedBarcodes = collectUsedBarcodes();
 
-    for (let t = desde; t <= hasta; t++) {
-        const key = String(t);
-        if (!v.sizes[key]) {
-            const codigo = generarCodigoSinConflicto(usados);
-            usados.add(codigo);
-            v.sizes[key] = { stock: '0', buy: '', sell: '', barcode: codigo };
+    for (let size = from; size <= to; size++) {
+        const key = String(size);
+        if (!variant.sizes[key]) {
+            const barcode = generateBarcodeAvoiding(usedBarcodes);
+            usedBarcodes.add(barcode);
+            variant.sizes[key] = { stock: '0', buy: '', sell: '', barcode };
         }
-        // La media talla del máximo completo (FULL_MAX + 0.5) no se ofrece;
-        // tampoco se genera para el último entero del rango (según spec: "36 a 38 con medias → sin 38½")
-        if (conMedias && t < hasta) {
-            const keyMedia = `${t}.5`;
-            if (!v.sizes[keyMedia]) {
-                const codigo = generarCodigoSinConflicto(usados);
-                usados.add(codigo);
-                v.sizes[keyMedia] = { stock: '0', buy: '', sell: '', barcode: codigo };
+        // No half size after the last whole size ("36 to 38 with halves" → no 38½)
+        if (includeHalves && size < to) {
+            const halfKey = `${size}.5`;
+            if (!variant.sizes[halfKey]) {
+                const barcode = generateBarcodeAvoiding(usedBarcodes);
+                usedBarcodes.add(barcode);
+                variant.sizes[halfKey] = { stock: '0', buy: '', sell: '', barcode };
             }
         }
     }
-    rerenderCard(varianteId);
+    rerenderCard(variantId);
 }
 
-function generarCodigoSinConflicto(usados) {
-    let codigo;
-    do { codigo = generarEAN13(); } while (usados.has(codigo));
-    return codigo;
+function applySameStock(variantId) {
+    const variant = findVariant(variantId);
+    if (!variant) return;
+    const stockValue = document.getElementById(`mismo-stock-val-${variantId}`)?.value || '0';
+    for (const size of Object.keys(variant.sizes)) {
+        variant.sizes[size].stock = stockValue;
+    }
+    rerenderCard(variantId);
 }
 
-// ─── Operaciones sobre variantes ─────────────────────────────────────────────
+// ─── Variant (color) operations ───────────────────────────────────────────────
 
-function duplicarVariante(varianteId) {
-    const original = estado.variants.find(v => v.id === varianteId);
+function duplicateVariant(variantId) {
+    const original = findVariant(variantId);
     if (!original) return;
 
-    const usados = codigosEnUso();
-    const nuevosSizes = {};
+    const usedBarcodes = collectUsedBarcodes();
+    const copiedSizes = {};
     for (const [size, item] of Object.entries(original.sizes)) {
-        const codigo = generarCodigoSinConflicto(usados);
-        usados.add(codigo);
-        nuevosSizes[size] = { ...item, stock: '0', barcode: codigo };
+        const barcode = generateBarcodeAvoiding(usedBarcodes);
+        usedBarcodes.add(barcode);
+        copiedSizes[size] = { ...item, stock: '0', barcode };
     }
 
-    const nueva = {
+    const copy = {
         id: crypto.randomUUID(),
-        color: '',        // nombre vacío (spec: "Duplicar color deja el nombre vacío")
+        color: '', // empty name (spec: "Duplicar color deja el nombre vacío")
         imageFile: null,
         imagePreview: null,
-        sizes: nuevosSizes,
-        _expandido: false,
+        sizes: copiedSizes,
+        isExpanded: false,
     };
 
-    const idx = estado.variants.findIndex(v => v.id === varianteId);
-    estado.variants.splice(idx + 1, 0, nueva);
+    const index = formState.variants.findIndex(variant => variant.id === variantId);
+    formState.variants.splice(index + 1, 0, copy);
 
-    listaColores.innerHTML = '';
-    for (const v of estado.variants) {
-        listaColores.appendChild(crearColorCard(v));
-    }
+    renderAllColorCards();
 
-    // Enfocar el input de nombre de la nueva variante
+    // Focus the name input of the new variant
     requestAnimationFrame(() => {
-        listaColores
-            .querySelector(`[data-id="${nueva.id}"] [data-nombre-color="${nueva.id}"]`)
-            ?.focus();
+        getColorNameInput(copy.id)?.focus();
     });
-    actualizarResumen();
+    updateSummary();
 }
 
-function quitarVariante(varianteId) {
-    if (estado.variants.length === 1) return; // siempre debe haber al menos uno
-    estado.variants = estado.variants.filter(v => v.id !== varianteId);
-    const card = listaColores.querySelector(`[data-id="${varianteId}"]`);
-    card?.remove();
-    actualizarResumen();
+function removeVariant(variantId) {
+    if (formState.variants.length === 1) return; // there must always be at least one
+    formState.variants = formState.variants.filter(variant => variant.id !== variantId);
+    getCardElement(variantId)?.remove();
+    updateSummary();
 }
 
-// ─── Validación ───────────────────────────────────────────────────────────────
+// ─── Validation ───────────────────────────────────────────────────────────────
 
-function validar() {
-    const errores = [];
-    const nombre = document.getElementById('modeloNombre')?.value.trim();
-    const catId  = document.getElementById('modeloCategoria')?.value;
+function validateForm() {
+    const errors = [];
+    const modelName = document.getElementById('modeloNombre')?.value.trim();
+    const categoryId = document.getElementById('modeloCategoria')?.value;
 
-    if (!nombre)  errores.push('El nombre del modelo es obligatorio.');
-    if (!catId)   errores.push('La categoría es obligatoria.');
+    if (!modelName) errors.push('El nombre del modelo es obligatorio.');
+    if (!categoryId) errors.push('La categoría es obligatoria.');
 
-    if (!estado.hasSizePricing) {
-        const buy  = parseFloat(document.getElementById('precioCompraUnico')?.value);
+    if (!formState.hasSizePricing) {
+        const buy = parseFloat(document.getElementById('precioCompraUnico')?.value);
         const sell = parseFloat(document.getElementById('precioVentaUnico')?.value);
-        if (!buy  || buy  <= 0) errores.push('El precio de compra debe ser mayor a 0.');
-        if (!sell || sell <= 0) errores.push('El precio de venta debe ser mayor a 0.');
+        if (!buy || buy <= 0) errors.push('El precio de compra debe ser mayor a 0.');
+        if (!sell || sell <= 0) errors.push('El precio de venta debe ser mayor a 0.');
     }
 
-    if (estado.variants.length === 0) {
-        errores.push('Debe agregar al menos un color.');
+    if (formState.variants.length === 0) {
+        errors.push('Debe agregar al menos un color.');
     }
 
-    // Chequear colores únicos (case-insensitive)
-    const nombresColor = estado.variants.map(v =>
-        document.querySelector(`[data-nombre-color="${v.id}"]`)?.value.trim().toLowerCase() || ''
+    // Unique color names (case-insensitive)
+    const colorNames = formState.variants.map(variant =>
+        getColorNameInput(variant.id)?.value.trim().toLowerCase() || ''
     );
 
-    const setNombres = new Set();
-    nombresColor.forEach((n, i) => {
-        if (!n) {
-            errores.push(`Color #${i + 1}: el nombre del color es obligatorio.`);
-        } else if (setNombres.has(n)) {
-            errores.push(`Color "${estado.variants[i].color || n}": nombre duplicado dentro del modelo.`);
+    const seenColorNames = new Set();
+    colorNames.forEach((name, index) => {
+        if (!name) {
+            errors.push(`Color #${index + 1}: el nombre del color es obligatorio.`);
+        } else if (seenColorNames.has(name)) {
+            errors.push(`Color "${formState.variants[index].color || name}": nombre duplicado dentro del modelo.`);
         } else {
-            setNombres.add(n);
+            seenColorNames.add(name);
         }
     });
 
-    // Chequear tallas y campos por color
-    const todosCodigos = new Set();
-    for (const v of estado.variants) {
-        const colorNombre = document.querySelector(`[data-nombre-color="${v.id}"]`)?.value.trim() || `(sin nombre)`;
-        const tallas = Object.keys(v.sizes);
+    // Sizes and fields per color
+    const seenBarcodes = new Set();
+    for (const variant of formState.variants) {
+        const colorName = getColorNameInput(variant.id)?.value.trim() || `(sin nombre)`;
+        const sizes = Object.keys(variant.sizes);
 
-        if (tallas.length === 0) {
-            errores.push(`Color "${colorNombre}": debe tener al menos una talla.`);
+        if (sizes.length === 0) {
+            errors.push(`Color "${colorName}": debe tener al menos una talla.`);
             continue;
         }
 
-        for (const size of tallas) {
-            const item = v.sizes[size];
-            const label = `Color "${colorNombre}", talla ${etiquetaTalla(size)}`;
+        for (const size of sizes) {
+            const item = variant.sizes[size];
+            const label = `Color "${colorName}", talla ${formatSizeLabel(size)}`;
 
             const stock = parseInt(item.stock);
             if (isNaN(stock) || stock < 0) {
-                errores.push(`${label}: el stock debe ser un número entero ≥ 0.`);
+                errors.push(`${label}: el stock debe ser un número entero ≥ 0.`);
             }
 
-            if (estado.hasSizePricing) {
-                const buy  = parseFloat(item.buy);
+            if (formState.hasSizePricing) {
+                const buy = parseFloat(item.buy);
                 const sell = parseFloat(item.sell);
-                if (!buy  || buy  <= 0) errores.push(`${label}: falta precio de compra.`);
-                if (!sell || sell <= 0) errores.push(`${label}: falta precio de venta.`);
+                if (!buy || buy <= 0) errors.push(`${label}: falta precio de compra.`);
+                if (!sell || sell <= 0) errors.push(`${label}: falta precio de venta.`);
             }
 
             if (!item.barcode) {
-                errores.push(`${label}: falta código de barras.`);
-            } else if (todosCodigos.has(item.barcode)) {
-                errores.push(`Código de barras "${item.barcode}" está duplicado.`);
+                errors.push(`${label}: falta código de barras.`);
+            } else if (seenBarcodes.has(item.barcode)) {
+                errors.push(`Código de barras "${item.barcode}" está duplicado.`);
             } else {
-                todosCodigos.add(item.barcode);
+                seenBarcodes.add(item.barcode);
             }
         }
     }
 
-    return errores;
+    return errors;
 }
 
-function mostrarErrores(errores) {
-    errListEl.classList.add('visible');
-    errItemsEl.innerHTML = errores.map(e => `<li>${e}</li>`).join('');
-    // Scroll al top del body del modal
+function showErrors(errors) {
+    errorListElement.classList.add('visible');
+    errorItemsElement.innerHTML = errors.map(message => `<li>${message}</li>`).join('');
+    // Scroll to the top of the modal body
     document.querySelector('.modal-calzado-body')?.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function ocultarErrores() {
-    errListEl.classList.remove('visible');
-    errItemsEl.innerHTML = '';
+function hideErrors() {
+    errorListElement.classList.remove('visible');
+    errorItemsElement.innerHTML = '';
 }
 
-// ─── Construcción del payload ──────────────────────────────────────────────────
+// ─── Payload ──────────────────────────────────────────────────────────────────
 
-function construirPayload() {
-    const nombre = document.getElementById('modeloNombre')?.value.trim();
-    const catId  = parseInt(document.getElementById('modeloCategoria')?.value);
-    const buyUni = parseFloat(document.getElementById('precioCompraUnico')?.value) || 0;
-    const sellUni= parseFloat(document.getElementById('precioVentaUnico')?.value)  || 0;
+function buildPayload() {
+    const modelName = document.getElementById('modeloNombre')?.value.trim();
+    const categoryId = parseInt(document.getElementById('modeloCategoria')?.value);
+    const singleBuy = parseFloat(document.getElementById('precioCompraUnico')?.value) || 0;
+    const singleSell = parseFloat(document.getElementById('precioVentaUnico')?.value) || 0;
 
-    const variants = estado.variants.map(v => {
-        const colorNombre = document.querySelector(`[data-nombre-color="${v.id}"]`)?.value.trim() || '';
-        const items = ordenarTallas(Object.keys(v.sizes)).map(size => {
-            const item = v.sizes[size];
+    const variants = formState.variants.map(variant => {
+        const colorName = getColorNameInput(variant.id)?.value.trim() || '';
+        const items = sortSizes(Object.keys(variant.sizes)).map(size => {
+            const item = variant.sizes[size];
             return {
                 size,
-                barcode:        item.barcode,
-                purchase_price: estado.hasSizePricing ? parseFloat(item.buy)  : buyUni,
-                sale_price:     estado.hasSizePricing ? parseFloat(item.sell) : sellUni,
-                stock:          parseInt(item.stock) || 0,
+                barcode: item.barcode,
+                purchase_price: formState.hasSizePricing ? parseFloat(item.buy) : singleBuy,
+                sale_price: formState.hasSizePricing ? parseFloat(item.sell) : singleSell,
+                stock: parseInt(item.stock) || 0,
             };
         });
         return {
-            color:     colorNombre,
-            image_url: null, // sin backend de upload, la URL queda null
+            color: colorName,
+            image_url: null, // no upload backend yet, the URL stays null
             items,
         };
     });
 
     return {
-        name: nombre,
-        category_id: catId,
-        has_size_pricing: estado.hasSizePricing,
+        name: modelName,
+        category_id: categoryId,
+        has_size_pricing: formState.hasSizePricing,
         variants,
     };
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-function mostrarToast(mensaje, tipo = 'exito') {
-    const div = document.createElement('div');
-    div.className = `toast toast-${tipo}`;
-    div.textContent = mensaje;
-    toastCont.appendChild(div);
-    setTimeout(() => div.remove(), 3500);
+function showToast(message, type = 'exito') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
 }
 
-// ─── Guardar ──────────────────────────────────────────────────────────────────
+// ─── Save ─────────────────────────────────────────────────────────────────────
 
-function guardarCalzado() {
-    // Sincronizar nombres de color desde los inputs al estado antes de validar
-    for (const v of estado.variants) {
-        const inputColor = document.querySelector(`[data-nombre-color="${v.id}"]`);
-        if (inputColor) v.color = inputColor.value.trim();
+function saveFootwear() {
+    // Sync color names from the inputs to the state before validating
+    for (const variant of formState.variants) {
+        const colorInput = getColorNameInput(variant.id);
+        if (colorInput) variant.color = colorInput.value.trim();
     }
 
-    const errores = validar();
-    if (errores.length > 0) {
-        mostrarErrores(errores);
+    const errors = validateForm();
+    if (errors.length > 0) {
+        showErrors(errors);
         return;
     }
 
-    ocultarErrores();
-    const payload = construirPayload();
+    hideErrors();
+    const payload = buildPayload();
     console.log("payload")
     console.log(payload)
-    // Sin backend: simular guardado y agregar fila en la tabla del inventario
+    // No backend: simulate saving and add a row to the inventory table
     console.log('[ShoeStock] Payload a enviar a POST /api/products:', JSON.stringify(payload, null, 2));
-    agregarFilasInventario(payload);
-    cerrarModal();
-    mostrarToast('Calzado registrado exitosamente');
+    appendRowsToInventoryTable(payload);
+    closeModal();
+    showToast('Calzado registrado exitosamente');
 }
- 
-/** Añade una fila resumen por cada variante al inventario visible. */
-function agregarFilasInventario(payload) {
-    const tbody = document.querySelector('.table-section table tbody');
-    if (!tbody) return;
 
-    const catMap = Object.fromEntries(CATEGORIAS.map(c => [c.id, c.nombre]));
-    const catNombre = catMap[payload.category_id] ?? `Cat. ${payload.category_id}`;
+/** Adds one summary row per variant to the visible inventory table. */
+function appendRowsToInventoryTable(payload) {
+    const tableBody = document.querySelector('.table-section table tbody');
+    if (!tableBody) return;
 
-    // Total de stock y precio representativo para la tabla plana existente
-    const todos  = payload.variants.flatMap(v => v.items);
-    const totalStock = todos.reduce((s, i) => s + i.stock, 0);
-    const precioRef  = todos[0] ?? {};
+    const categoryNames = Object.fromEntries(CATEGORIES.map(category => [category.id, category.name]));
+    const categoryName = categoryNames[payload.category_id] ?? `Cat. ${payload.category_id}`;
 
-    for (const v of payload.variants) {
-        const stockVariante = v.items.reduce((s, i) => s + i.stock, 0);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+    // Representative price for the existing flat table
+    const allItems = payload.variants.flatMap(variant => variant.items);
+    const referenceItem = allItems[0] ?? {};
+
+    for (const variant of payload.variants) {
+        const variantStock = variant.items.reduce((sum, item) => sum + item.stock, 0);
+        const row = document.createElement('tr');
+        row.innerHTML = `
             <td>—</td>
-            <td>${payload.name} · ${v.color}</td>
-            <td>${catNombre}</td>
-            <td>$${(precioRef.purchase_price ?? 0).toLocaleString('es')}</td>
-            <td>$${(precioRef.sale_price ?? 0).toLocaleString('es')}</td>
-            <td>${stockVariante}</td>
+            <td>${payload.name} · ${variant.color}</td>
+            <td>${categoryName}</td>
+            <td>$${(referenceItem.purchase_price ?? 0).toLocaleString('es')}</td>
+            <td>$${(referenceItem.sale_price ?? 0).toLocaleString('es')}</td>
+            <td>${variantStock}</td>
             <td>
                 <button class="btn-standard">Editar</button>
                 <button class="btn-remove">
@@ -871,50 +877,52 @@ function agregarFilasInventario(payload) {
                     </svg>
                 </button>
             </td>`;
-        tbody.appendChild(tr);
+        tableBody.appendChild(row);
     }
 }
 
-// ─── Event listeners globales ─────────────────────────────────────────────────
+// ─── Global event listeners ───────────────────────────────────────────────────
 
-// Abrir modal
-btnAbrir?.addEventListener('click', abrirModal);
+// Open modal
+openModalButton?.addEventListener('click', openModal);
 
-// Cerrar con botón X
-btnCerrar?.addEventListener('click', pedirCierre);
+// Close with the X button
+closeModalButton?.addEventListener('click', requestCloseModal);
 
-// Cerrar haciendo clic en el fondo
-overlay?.addEventListener('click', (e) => {
-    if (e.target === overlay) pedirCierre();
+// Close by clicking the backdrop
+modalOverlay?.addEventListener('click', event => {
+    if (event.target === modalOverlay) requestCloseModal();
 });
 
-// Checkbox precio por talla
-toggleEl?.addEventListener('change', () => {
-    estado.hasSizePricing = toggleEl.checked;
-    actualizarToggle();
-    // Rerenderizar todas las tarjetas para actualizar columnas de precio
-    listaColores.innerHTML = '';
-    for (const v of estado.variants) {
-        listaColores.appendChild(crearColorCard(v));
-    }
+// "Price per size" checkbox
+pricePerSizeCheckbox?.addEventListener('change', () => {
+    formState.hasSizePricing = pricePerSizeCheckbox.checked;
+    updatePricingMode();
+    // Re-render every card to show/hide the price columns
+    renderAllColorCards();
 });
 
-// Agregar color
-btnAgrColor?.addEventListener('click', () => {
-    const nueva = crearVariante();
-    estado.variants.push(nueva);
-    const card = crearColorCard(nueva);
-    listaColores.appendChild(card);
-    actualizarResumen();
-    card.querySelector(`[data-nombre-color="${nueva.id}"]`)?.focus();
+// Add color
+addColorButton?.addEventListener('click', () => {
+    const variant = createVariant();
+    formState.variants.push(variant);
+    const card = createColorCard(variant);
+    colorList.appendChild(card);
+    updateSummary();
+    getColorNameInput(variant.id)?.focus();
 });
 
-// Guardar
-btnGuardar?.addEventListener('click', guardarCalzado);
+// Color list: the three delegated listeners (this replaces every per-card listener)
+colorList.addEventListener('click', handleColorListClick);
+colorList.addEventListener('input', handleColorListInput);
+colorList.addEventListener('change', handleColorListChange);
 
-// Mini-modal de confirmación
-confirmCancelar?.addEventListener('click', () => {
+// Save
+saveButton?.addEventListener('click', saveFootwear);
+
+// Discard-confirmation mini-modal
+confirmKeepEditingButton?.addEventListener('click', () => {
     confirmOverlay.classList.remove('active');
     document.getElementById('modeloNombre')?.focus();
 });
-confirmDescartar?.addEventListener('click', cerrarModal);
+confirmDiscardButton?.addEventListener('click', closeModal);
