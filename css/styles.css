@@ -422,7 +422,7 @@ main> :nth-child(1) {
 
 /* ─── Variables adicionales para el formulario ─── */
 :root {
-    --modal-calzado-max-width: 820px;
+    --footwear-modal-max-width: 820px;
     --chip-active-bg: var(--primary-color);
     --chip-active-color: #ffffff;
     --chip-inactive-bg: #f0f4ff;
@@ -436,7 +436,7 @@ main> :nth-child(1) {
 }
 
 /* ─── Modal grande (calzado) ─── */
-.modal-calzado-overlay {
+.footwear-modal-overlay {
     padding: 1.125rem;
     display: none;
     position: fixed;
@@ -452,11 +452,11 @@ main> :nth-child(1) {
     }
 }
 
-.modal-calzado {
+.footwear-modal {
     background: var(--card-bg);
     border-radius: var(--radius);
     width: 100%;
-    max-width: var(--modal-calzado-max-width);
+    max-width: var(--footwear-modal-max-width);
     max-height: 90vh;
     display: flex;
     flex-direction: column;
@@ -465,7 +465,7 @@ main> :nth-child(1) {
 }
 
 /* Header fijo */
-.modal-calzado-header {
+.footwear-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -474,7 +474,7 @@ main> :nth-child(1) {
     flex-shrink: 0;
     background: var(--card-bg);
 
-    .modal-calzado-title {
+    .footwear-modal-title {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -492,7 +492,7 @@ main> :nth-child(1) {
 }
 
 /* Cuerpo con scroll */
-.modal-calzado-body {
+.footwear-modal-body {
     flex: 1;
     overflow-y: auto;
     padding: 1.5rem;
@@ -502,7 +502,7 @@ main> :nth-child(1) {
 }
 
 /* Footer fijo */
-.modal-calzado-footer {
+.footwear-modal-footer {
     border-top: 1px solid var(--border-color);
     padding: 1rem 1.5rem;
     flex-shrink: 0;
@@ -513,7 +513,7 @@ main> :nth-child(1) {
     gap: 1rem;
 }
 
-.modal-calzado-resumen {
+.footwear-modal-summary {
     font-size: 0.875rem;
     color: var(--text-muted-color);
     font-weight: 500;
@@ -568,7 +568,7 @@ main> :nth-child(1) {
 }
 
 /* ─── Sección del modelo ─── */
-.seccion-modelo {
+.model-section {
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -583,7 +583,7 @@ main> :nth-child(1) {
         border-bottom: 1px solid var(--border-color);
     }
 
-    .fila-dos-columnas {
+    .two-column-row {
         display: flex;
         gap: 1rem;
 
@@ -592,7 +592,7 @@ main> :nth-child(1) {
         }
     }
 
-    .fila-precios {
+    .price-row {
         display: flex;
         gap: 1rem;
 
@@ -603,7 +603,7 @@ main> :nth-child(1) {
 }
 
 /* ─── Checkbox de precio por talla ─── */
-.checkbox-precio-talla {
+.price-per-size-checkbox {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
@@ -629,7 +629,7 @@ main> :nth-child(1) {
         cursor: pointer;
     }
 
-    .checkbox-precio-talla-texto {
+    .price-per-size-checkbox-text {
         display: flex;
         flex-direction: column;
         gap: 0.1rem;
@@ -649,12 +649,12 @@ main> :nth-child(1) {
 }
 
 /* ─── Sección de colores ─── */
-.seccion-colores {
+.colors-section {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 
-    .seccion-colores-header {
+    .colors-section-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -670,7 +670,7 @@ main> :nth-child(1) {
         }
     }
 
-    .lista-colores {
+    .color-list {
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -693,7 +693,7 @@ main> :nth-child(1) {
         border-bottom: 1px solid var(--border-color);
     }
 
-    .color-foto-btn {
+    .color-photo-btn {
         width: 40px;
         height: 40px;
         border-radius: var(--radius);
@@ -722,7 +722,7 @@ main> :nth-child(1) {
         }
     }
 
-    .color-nombre-input {
+    .color-name-input {
         flex: 1;
         padding: 0.5rem 0.7rem;
         border: 1px solid var(--border-color);
@@ -742,7 +742,7 @@ main> :nth-child(1) {
         }
     }
 
-    .color-acciones {
+    .color-actions {
         display: flex;
         gap: 0.35rem;
         flex-shrink: 0;
@@ -757,12 +757,12 @@ main> :nth-child(1) {
 }
 
 /* ─── Selector de tallas ─── */
-.tallas-selector {
+.sizes-selector {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
 
-    .tallas-label {
+    .sizes-label {
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -770,20 +770,20 @@ main> :nth-child(1) {
         color: var(--text-muted-color);
     }
 
-    .tallas-grid {
+    .sizes-grid {
         display: flex;
         flex-wrap: wrap;
         gap: 0.4rem;
     }
 
-    .medias-tallas-fila {
+    .half-sizes-row {
         display: flex;
         flex-wrap: wrap;
         gap: 0.4rem;
         align-items: center;
         min-height: 34px;
 
-        .medias-tallas-etiqueta {
+        .half-sizes-label {
             font-size: 0.72rem;
             font-weight: 600;
             color: var(--text-muted-color);
@@ -796,13 +796,13 @@ main> :nth-child(1) {
 }
 
 /* ─── Grupos de fila (enteras / medias) ─── */
-.tallas-fila-grupo {
+.sizes-row-group {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
 }
 
-.tallas-fila-etiqueta {
+.sizes-row-label {
     font-size: 0.72rem;
     font-weight: 600;
     color: var(--text-muted-color);
@@ -811,7 +811,7 @@ main> :nth-child(1) {
 }
 
 /* ─── Botón Ver más / Ver menos tallas ─── */
-.btn-ver-mas-tallas {
+.btn-show-more-sizes {
     align-self: flex-start;
     padding: 0.25rem 0.65rem;
     border: 1px solid var(--border-color);
@@ -835,7 +835,7 @@ main> :nth-child(1) {
 }
 
 /* ─── Chip de talla ─── */
-.chip-talla {
+.size-chip {
     align-items: center;
     justify-content: center;
     min-width: 36px;
@@ -869,7 +869,7 @@ main> :nth-child(1) {
 }
 
 /* ─── Controles de rango ─── */
-.rango-tallas {
+.size-range {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -894,7 +894,7 @@ main> :nth-child(1) {
         }
     }
 
-    .check-medias {
+    .half-sizes-check {
         display: flex;
         align-items: center;
         gap: 0.35rem;
@@ -907,7 +907,7 @@ main> :nth-child(1) {
         }
     }
 
-    .btn-aplicar-rango {
+    .btn-apply-range {
         padding: 0.3rem 0.65rem;
         border: 1px solid var(--primary-color);
         border-radius: var(--radius);
@@ -926,13 +926,13 @@ main> :nth-child(1) {
 }
 
 /* ─── Tabla de tallas ─── */
-.tabla-tallas-wrapper {
+.sizes-table-wrapper {
     overflow-x: auto;
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
 }
 
-.tabla-tallas {
+.sizes-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.8rem;
@@ -958,14 +958,14 @@ main> :nth-child(1) {
         vertical-align: middle;
     }
 
-    .talla-tag {
+    .size-tag {
         font-weight: 700;
         color: var(--primary-color);
         min-width: 3rem;
         display: inline-block;
     }
 
-    .input-tabla {
+    .table-input {
         width: 100%;
         padding: 0.35rem 0.5rem;
         border: 1px solid var(--border-color);
@@ -982,7 +982,7 @@ main> :nth-child(1) {
 }
 
 /* ─── Mismo stock para todas ─── */
-.mismo-stock-row {
+.same-stock-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -1063,14 +1063,14 @@ main> :nth-child(1) {
         color: var(--primary-color);
     }
 
-    &.peligro:hover {
+    &.danger:hover {
         border-color: var(--light-red);
         color: var(--light-red);
     }
 }
 
 /* ─── Toast ─── */
-.toast-contenedor {
+.toast-container {
     position: fixed;
     bottom: 1.5rem;
     right: 1.5rem;
@@ -1090,7 +1090,7 @@ main> :nth-child(1) {
     animation: toast-in 0.25s ease;
     max-width: 320px;
 
-    &.toast-exito {
+    &.toast-success {
         background: #2e7d32;
     }
 
@@ -1148,14 +1148,14 @@ main> :nth-child(1) {
         line-height: 1.5;
     }
 
-    .confirm-acciones {
+    .confirm-actions {
         display: flex;
         gap: 0.5rem;
         justify-content: flex-end;
     }
 }
 
-.btn-cancelar {
+.btn-cancel {
     padding: 0.5rem 1rem;
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
@@ -1169,7 +1169,7 @@ main> :nth-child(1) {
     }
 }
 
-.btn-descartar {
+.btn-discard {
     padding: 0.5rem 1rem;
     border: none;
     border-radius: var(--radius);
@@ -1186,18 +1186,18 @@ main> :nth-child(1) {
 }
 
 /* ─── Input file oculto (foto color) ─── */
-.input-foto-color {
+.color-photo-input {
     display: none;
 }
 
 /* ─── Responsive: móvil (<640px) ─── */
 @media (max-width: 640px) {
-    .modal-calzado-overlay {
+    .footwear-modal-overlay {
         padding: 0;
         align-items: flex-end;
     }
 
-    .modal-calzado {
+    .footwear-modal {
         max-width: 100%;
         max-height: 100dvh;
         border-radius: var(--radius) var(--radius) 0 0;
@@ -1205,17 +1205,17 @@ main> :nth-child(1) {
         border-radius: 0;
     }
 
-    .seccion-modelo .fila-dos-columnas,
-    .seccion-modelo .fila-precios {
+    .model-section .two-column-row,
+    .model-section .price-row {
         flex-direction: column;
         gap: 0.75rem;
     }
 
-    .rango-tallas {
+    .size-range {
         gap: 0.4rem;
     }
 
-    .modal-calzado-footer {
+    .footwear-modal-footer {
         flex-direction: column;
         align-items: stretch;
         gap: 0.5rem;

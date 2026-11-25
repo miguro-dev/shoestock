@@ -9,8 +9,8 @@
  *     without re-binding anything.
  * Everything else (full-card re-render, validation, payload, texts) is kept as it was.
  *
- * Identifiers are in English; HTML ids and CSS class names stay in Spanish because they are
- * the contract with inventario.html and styles.css.
+ * Identifiers, HTML ids, CSS class names and data-attributes are all in English
+ * (the contract with inventario.html and styles.css). Only user-facing texts are in Spanish.
  */
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -142,23 +142,23 @@ function sortSizes(sizes) {
 
 // ─── DOM references ───────────────────────────────────────────────────────────
 
-const modalOverlay = document.getElementById('modalCalzadoOverlay');
-const closeModalButton = document.getElementById('modalCalzadoCerrar');
+const modalOverlay = document.getElementById('footwearModalOverlay');
+const closeModalButton = document.getElementById('footwearModalClose');
 const openModalButton = document.getElementById('btnAddProduct');
-const pricePerSizeCheckbox = document.getElementById('togglePrecioPorTalla'); // <input type="checkbox">
-const singlePriceFields = document.getElementById('preciosUnicos');
-const colorList = document.getElementById('listaColores');
-const addColorButton = document.getElementById('btnAgregarColor');
-const summaryElement = document.getElementById('resumenFormulario');
-const errorListElement = document.getElementById('listaErrores');
-const errorItemsElement = document.getElementById('listaErroresItems');
-const saveButton = document.getElementById('btnGuardarCalzado');
-const toastContainer = document.getElementById('toastContenedor');
+const pricePerSizeCheckbox = document.getElementById('pricePerSizeToggle'); // <input type="checkbox">
+const singlePriceFields = document.getElementById('singlePrices');
+const colorList = document.getElementById('colorList');
+const addColorButton = document.getElementById('btnAddColor');
+const summaryElement = document.getElementById('formSummary');
+const errorListElement = document.getElementById('errorList');
+const errorItemsElement = document.getElementById('errorListItems');
+const saveButton = document.getElementById('btnSaveFootwear');
+const toastContainer = document.getElementById('toastContainer');
 
 // Discard-confirmation mini-modal
 const confirmOverlay = document.getElementById('confirmOverlay');
-const confirmKeepEditingButton = document.getElementById('confirmCancelar');
-const confirmDiscardButton = document.getElementById('confirmDescartar');
+const confirmKeepEditingButton = document.getElementById('confirmKeepEditing');
+const confirmDiscardButton = document.getElementById('confirmDiscard');
 
 // ─── Open / close modal ───────────────────────────────────────────────────────
 
@@ -171,7 +171,7 @@ function openModal() {
     modalOverlay.classList.add('active');
     // Initial focus on the model name
     requestAnimationFrame(() => {
-        document.getElementById('modeloNombre')?.focus();
+        document.getElementById('modelName')?.focus();
     });
     document.addEventListener('keydown', trapFocus);
 }
@@ -193,7 +193,7 @@ function closeModal() {
 }
 
 function formHasData() {
-    const modelName = document.getElementById('modeloNombre')?.value.trim();
+    const modelName = document.getElementById('modelName')?.value.trim();
     if (modelName) return true;
     for (const variant of formState.variants) {
         if (variant.color || Object.keys(variant.sizes).length > 0) return true;
@@ -262,10 +262,10 @@ function updateSummary() {
 
 function renderEntireForm() {
     // Sync model fields
-    const nameInput = document.getElementById('modeloNombre');
-    const categorySelect = document.getElementById('modeloCategoria');
-    const buyInput = document.getElementById('precioCompraUnico');
-    const sellInput = document.getElementById('precioVentaUnico');
+    const nameInput = document.getElementById('modelName');
+    const categorySelect = document.getElementById('modelCategory');
+    const buyInput = document.getElementById('singlePurchasePrice');
+    const sellInput = document.getElementById('singleSalePrice');
 
     if (nameInput) nameInput.value = formState.name;
     if (categorySelect) categorySelect.value = formState.categoryId ?? '';
@@ -295,7 +295,7 @@ function createColorCard(variant) {
     card.innerHTML = `
         <div class="color-card-header">
             <!-- Photo -->
-            <button type="button" class="color-foto-btn" aria-label="Subir foto del color"
+            <button type="button" class="color-photo-btn" aria-label="Subir foto del color"
                 data-action="pick-photo" data-variant-id="${variant.id}">
                 ${variant.imagePreview
                     ? `<img src="${variant.imagePreview}" alt="Vista previa">`
@@ -306,16 +306,16 @@ function createColorCard(variant) {
                             <circle cx="12" cy="13" r="3"/>
                         </svg>`}
             </button>
-            <input type="file" accept="image/*" class="input-foto-color"
-                id="foto-${variant.id}" data-field="photo" data-variant-id="${variant.id}">
+            <input type="file" accept="image/*" class="color-photo-input"
+                id="photo-${variant.id}" data-field="photo" data-variant-id="${variant.id}">
 
             <!-- Color name -->
-            <input type="text" class="color-nombre-input" placeholder="Nombre del color (ej: Negro / Rojo)"
+            <input type="text" class="color-name-input" placeholder="Nombre del color (ej: Negro / Rojo)"
                 value="${variant.color}" aria-label="Nombre del color"
                 data-field="color" data-variant-id="${variant.id}">
 
             <!-- Actions -->
-            <div class="color-acciones">
+            <div class="color-actions">
                 <button type="button" class="btn-icon-sm" title="Duplicar color"
                     aria-label="Duplicar color" data-action="duplicate-color" data-variant-id="${variant.id}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -325,7 +325,7 @@ function createColorCard(variant) {
                         <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
                     </svg>
                 </button>
-                <button type="button" class="btn-icon-sm peligro" title="Quitar color"
+                <button type="button" class="btn-icon-sm danger" title="Quitar color"
                     aria-label="Quitar color" data-action="remove-color" data-variant-id="${variant.id}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -378,7 +378,7 @@ function renderSizeSelector(variant) {
     const wholeChips = wholeSizesToShow.map(size => {
         const key = String(size);
         const isActive = selectedSizes.has(key);
-        return `<button type="button" class="chip-talla"
+        return `<button type="button" class="size-chip"
             aria-pressed="${isActive}" data-action="toggle-size" data-variant-id="${variant.id}" data-size="${key}"
             aria-label="Talla ${key}">${key}</button>`;
     }).join('');
@@ -387,13 +387,13 @@ function renderSizeSelector(variant) {
     const halfChips = halfSizeBasesToShow.map(size => {
         const key = `${size}.5`;
         const isActive = selectedSizes.has(key);
-        return `<button type="button" class="chip-talla"
+        return `<button type="button" class="size-chip"
             aria-pressed="${isActive}" data-action="toggle-size" data-variant-id="${variant.id}" data-size="${key}"
             aria-label="Talla ${size} y medio">${formatSizeLabel(key)}</button>`;
     }).join('');
 
     // Expand / collapse button
-    const expandButton = `<button type="button" class="btn-ver-mas-tallas"
+    const expandButton = `<button type="button" class="btn-show-more-sizes"
         data-action="toggle-expanded" data-variant-id="${variant.id}" aria-expanded="${isExpanded}">
         ${isExpanded ? 'Ver menos tallas' : 'Ver más tallas'}
     </button>`;
@@ -407,25 +407,25 @@ function renderSizeSelector(variant) {
     ).join('');
 
     return `
-        <div class="tallas-selector">
-            <div class="tallas-fila-grupo" role="group" aria-label="Tallas enteras">
-                <span class="tallas-fila-etiqueta">Tallas enteras</span>
-                <div class="tallas-grid">${wholeChips}</div>
+        <div class="sizes-selector">
+            <div class="sizes-row-group" role="group" aria-label="Tallas enteras">
+                <span class="sizes-row-label">Tallas enteras</span>
+                <div class="sizes-grid">${wholeChips}</div>
             </div>
-            <div class="tallas-fila-grupo" role="group" aria-label="Medias tallas">
-                <span class="tallas-fila-etiqueta">Medias tallas</span>
-                <div class="tallas-grid tallas-grid">${halfChips}</div>
+            <div class="sizes-row-group" role="group" aria-label="Medias tallas">
+                <span class="sizes-row-label">Medias tallas</span>
+                <div class="sizes-grid sizes-grid">${halfChips}</div>
             </div>
             ${expandButton}
-            <div class="rango-tallas">
-                <label for="rango-desde-${variant.id}">Desde</label>
-                <select id="rango-desde-${variant.id}" data-range-from>${fromOptions}</select>
-                <label for="rango-hasta-${variant.id}">hasta</label>
-                <select id="rango-hasta-${variant.id}" data-range-to>${toOptions}</select>
-                <label class="check-medias">
+            <div class="size-range">
+                <label for="range-from-${variant.id}">Desde</label>
+                <select id="range-from-${variant.id}" data-range-from>${fromOptions}</select>
+                <label for="range-to-${variant.id}">hasta</label>
+                <select id="range-to-${variant.id}" data-range-to>${toOptions}</select>
+                <label class="half-sizes-check">
                     <input type="checkbox" data-range-include-halves> con medias tallas
                 </label>
-                <button type="button" class="btn-aplicar-rango" data-action="apply-range"
+                <button type="button" class="btn-apply-range" data-action="apply-range"
                     data-variant-id="${variant.id}">
                     Aplicar rango
                 </button>
@@ -448,23 +448,23 @@ function renderSizeTable(variant) {
     const rows = sortedSizes.map(size => {
         const item = variant.sizes[size];
         const priceCells = showPrices
-            ? `<td><input type="number" class="input-tabla" value="${item.buy}"
+            ? `<td><input type="number" class="table-input" value="${item.buy}"
                     placeholder="0" min="0" step="1"
                     aria-label="Precio compra talla ${formatSizeLabel(size)}"
                     data-field="buy" data-variant-id="${variant.id}" data-size="${size}"></td>
-               <td><input type="number" class="input-tabla" value="${item.sell}"
+               <td><input type="number" class="table-input" value="${item.sell}"
                     placeholder="0" min="0" step="1"
                     aria-label="Precio venta talla ${formatSizeLabel(size)}"
                     data-field="sell" data-variant-id="${variant.id}" data-size="${size}"></td>`
             : '';
         return `<tr>
-            <td><span class="talla-tag">${formatSizeLabel(size)}</span></td>
-            <td><input type="number" class="input-tabla" value="${item.stock}"
+            <td><span class="size-tag">${formatSizeLabel(size)}</span></td>
+            <td><input type="number" class="table-input" value="${item.stock}"
                     placeholder="0" min="0" step="1"
                     aria-label="Stock talla ${formatSizeLabel(size)}"
                     data-field="stock" data-variant-id="${variant.id}" data-size="${size}"></td>
             ${priceCells}
-            <td><input type="text" class="input-tabla" value="${item.barcode}"
+            <td><input type="text" class="table-input" value="${item.barcode}"
                     placeholder="Código de barras"
                     aria-label="Código de barras talla ${formatSizeLabel(size)}"
                     data-field="barcode" data-variant-id="${variant.id}" data-size="${size}"
@@ -474,17 +474,17 @@ function renderSizeTable(variant) {
 
     // "Same stock for all" control
     const sameStockRow = `
-        <div class="mismo-stock-row">
+        <div class="same-stock-row">
             <span>Mismo stock para todas:</span>
             <input type="number" placeholder="0" min="0" step="1"
-                id="mismo-stock-val-${variant.id}" aria-label="Valor de stock para todas las tallas">
+                id="same-stock-value-${variant.id}" aria-label="Valor de stock para todas las tallas">
             <button type="button" data-action="apply-same-stock" data-variant-id="${variant.id}">Aplicar</button>
         </div>`;
 
     return `
         ${sameStockRow}
-        <div class="tabla-tallas-wrapper">
-            <table class="tabla-tallas" aria-label="Tallas y stock de este color">
+        <div class="sizes-table-wrapper">
+            <table class="sizes-table" aria-label="Tallas y stock de este color">
                 <thead><tr>${headers}</tr></thead>
                 <tbody>${rows}</tbody>
             </table>
@@ -498,7 +498,7 @@ function rerenderCard(variantId) {
     if (!variant) return;
     const existingCard = getCardElement(variantId);
     if (!existingCard) return;
-    // No listeners to re-attach: the delegated ones on #listaColores keep working.
+    // No listeners to re-attach: the delegated ones on #colorList keep working.
     colorList.replaceChild(createColorCard(variant), existingCard);
     updateSummary();
 }
@@ -524,7 +524,7 @@ function handleColorListClick(event) {
 
     switch (action) {
         case 'pick-photo':
-            document.getElementById(`foto-${variantId}`).click();
+            document.getElementById(`photo-${variantId}`).click();
             break;
         case 'duplicate-color':
             duplicateVariant(variantId);
@@ -633,7 +633,7 @@ function applySizeRange(variantId, card) {
 function applySameStock(variantId) {
     const variant = findVariant(variantId);
     if (!variant) return;
-    const stockValue = document.getElementById(`mismo-stock-val-${variantId}`)?.value || '0';
+    const stockValue = document.getElementById(`same-stock-value-${variantId}`)?.value || '0';
     for (const size of Object.keys(variant.sizes)) {
         variant.sizes[size].stock = stockValue;
     }
@@ -686,15 +686,15 @@ function removeVariant(variantId) {
 
 function validateForm() {
     const errors = [];
-    const modelName = document.getElementById('modeloNombre')?.value.trim();
-    const categoryId = document.getElementById('modeloCategoria')?.value;
+    const modelName = document.getElementById('modelName')?.value.trim();
+    const categoryId = document.getElementById('modelCategory')?.value;
 
     if (!modelName) errors.push('El nombre del modelo es obligatorio.');
     if (!categoryId) errors.push('La categoría es obligatoria.');
 
     if (!formState.hasSizePricing) {
-        const buy = parseFloat(document.getElementById('precioCompraUnico')?.value);
-        const sell = parseFloat(document.getElementById('precioVentaUnico')?.value);
+        const buy = parseFloat(document.getElementById('singlePurchasePrice')?.value);
+        const sell = parseFloat(document.getElementById('singleSalePrice')?.value);
         if (!buy || buy <= 0) errors.push('El precio de compra debe ser mayor a 0.');
         if (!sell || sell <= 0) errors.push('El precio de venta debe ser mayor a 0.');
     }
@@ -763,7 +763,7 @@ function showErrors(errors) {
     errorListElement.classList.add('visible');
     errorItemsElement.innerHTML = errors.map(message => `<li>${message}</li>`).join('');
     // Scroll to the top of the modal body
-    document.querySelector('.modal-calzado-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('.footwear-modal-body')?.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function hideErrors() {
@@ -774,10 +774,10 @@ function hideErrors() {
 // ─── Payload ──────────────────────────────────────────────────────────────────
 
 function buildPayload() {
-    const modelName = document.getElementById('modeloNombre')?.value.trim();
-    const categoryId = parseInt(document.getElementById('modeloCategoria')?.value);
-    const singleBuy = parseFloat(document.getElementById('precioCompraUnico')?.value) || 0;
-    const singleSell = parseFloat(document.getElementById('precioVentaUnico')?.value) || 0;
+    const modelName = document.getElementById('modelName')?.value.trim();
+    const categoryId = parseInt(document.getElementById('modelCategory')?.value);
+    const singleBuy = parseFloat(document.getElementById('singlePurchasePrice')?.value) || 0;
+    const singleSell = parseFloat(document.getElementById('singleSalePrice')?.value) || 0;
 
     const variants = formState.variants.map(variant => {
         const colorName = getColorNameInput(variant.id)?.value.trim() || '';
@@ -808,7 +808,7 @@ function buildPayload() {
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-function showToast(message, type = 'exito') {
+function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
@@ -923,6 +923,6 @@ saveButton?.addEventListener('click', saveFootwear);
 // Discard-confirmation mini-modal
 confirmKeepEditingButton?.addEventListener('click', () => {
     confirmOverlay.classList.remove('active');
-    document.getElementById('modeloNombre')?.focus();
+    document.getElementById('modelName')?.focus();
 });
 confirmDiscardButton?.addEventListener('click', closeModal);
