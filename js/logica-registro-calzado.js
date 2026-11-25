@@ -842,43 +842,50 @@ function saveFootwear() {
     showToast('Calzado registrado exitosamente');
 }
 
-/** Adds one summary row per variant to the visible inventory table. */
+/** Agrega una fila al inventario visible luego de guardar un producto. */
 function appendRowsToInventoryTable(payload) {
     const tableBody = document.querySelector('.table-section table tbody');
     if (!tableBody) return;
 
     const categoryNames = Object.fromEntries(CATEGORIES.map(category => [category.id, category.name]));
-    const categoryName = categoryNames[payload.category_id] ?? `Cat. ${payload.category_id}`;
+    const categoryName = categoryNames[payload.category_id] ?? `Categoría ${payload.category_id}`;
 
-    // Representative price for the existing flat table
-    const allItems = payload.variants.flatMap(variant => variant.items);
-    const referenceItem = allItems[0] ?? {};
+    const SVG_VER = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+    </svg>`;
 
-    for (const variant of payload.variants) {
-        const variantStock = variant.items.reduce((sum, item) => sum + item.stock, 0);
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>—</td>
-            <td>${payload.name} · ${variant.color}</td>
-            <td>${categoryName}</td>
-            <td>$${(referenceItem.purchase_price ?? 0).toLocaleString('es')}</td>
-            <td>$${(referenceItem.sale_price ?? 0).toLocaleString('es')}</td>
-            <td>${variantStock}</td>
-            <td>
-                <button class="btn-standard">Editar</button>
-                <button class="btn-remove">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/>
-                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1 -12"/>
-                        <path d="M9 7v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>
-                    </svg>
-                </button>
-            </td>`;
-        tableBody.appendChild(row);
-    }
+    const SVG_EDITAR = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>`;
+
+    const SVG_ELIMINAR = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/>
+        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1 -12"/>
+        <path d="M9 7v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>
+    </svg>`;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${payload.name}</td>
+        <td>${categoryName}</td>
+        <td class="actions-cell">
+            <button class="btn-icon-sm" title="Ver detalle" aria-label="Ver detalle de ${payload.name}">
+                ${SVG_VER}
+            </button>
+            <button class="btn-icon-sm" title="Editar" aria-label="Editar ${payload.name}">
+                ${SVG_EDITAR}
+            </button>
+            <button class="btn-icon-sm danger" title="Eliminar" aria-label="Eliminar ${payload.name}">
+                ${SVG_ELIMINAR}
+            </button>
+        </td>`;
+    tableBody.appendChild(row);
 }
 
 // ─── Global event listeners ───────────────────────────────────────────────────
