@@ -1,18 +1,59 @@
 [
   {
-    "id": "ID-001",
-    "producto": "Zapato Deportivo",
-    "categoria": "Deportivo",
-    "precioCompra": 30000,
-    "precioVenta": 50000,
-    "stock": 20
+    "id": 1,
+    "name": "Air Runner 2000",
+    "category_id": 1,
+    "has_size_pricing": false,
+    "variants": [
+      {
+        "color": "Negro / Rojo",
+        "image_url": null,
+        "items": [
+          { "size": "40", "barcode": "7891234560001", "purchase_price": 45000, "sale_price": 75000, "stock": 8 },
+          { "size": "41", "barcode": "7891234560002", "purchase_price": 45000, "sale_price": 75000, "stock": 5 },
+          { "size": "42", "barcode": "7891234560003", "purchase_price": 45000, "sale_price": 75000, "stock": 3 }
+        ]
+      },
+      {
+        "color": "Blanco",
+        "image_url": null,
+        "items": [
+          { "size": "39", "barcode": "7891234560004", "purchase_price": 45000, "sale_price": 75000, "stock": 6 },
+          { "size": "40", "barcode": "7891234560005", "purchase_price": 45000, "sale_price": 75000, "stock": 4 }
+        ]
+      }
+    ]
   },
   {
-    "id": "ID-002",
-    "producto": "Botín de Cuero",
-    "categoria": "Casual",
-    "precioCompra": 60000,
-    "precioVenta": 80000,
-    "stock": 15
+    "id": 2,
+    "name": "Botín de Cuero Classic",
+    "category_id": 2,
+    "has_size_pricing": false,
+    "variants": [
+      {
+        "color": "Marrón",
+        "image_url": null,
+        "items": [
+          { "size": "38", "barcode": "7891234560006", "purchase_price": 60000, "sale_price": 95000, "stock": 7 },
+          { "size": "39", "barcode": "7891234560007", "purchase_price": 60000, "sale_price": 95000, "stock": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Sandalia Verano",
+    "category_id": 4,
+    "has_size_pricing": true,
+    "variants": [
+      {
+        "color": "Beige",
+        "image_url": null,
+        "items": [
+          { "size": "36", "barcode": "7891234560008", "purchase_price": 20000, "sale_price": 38000, "stock": 10 },
+          { "size": "37", "barcode": "7891234560009", "purchase_price": 22000, "sale_price": 42000, "stock": 8 }
+        ]
+      }
+    ]
   }
 ]
