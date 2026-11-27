@@ -49,12 +49,7 @@ El catálogo no es una tabla plana de "productos" — se modela en 3 niveles por
 
 **Por qué:** si el precio se quedara en `products` con un "override" opcional por talla, cada consulta (catálogo, carrito, checkout, reportes) tendría que decidir cuál de las dos columnas usar. Al vivir el precio únicamente en `product_items`, hay una sola fuente de verdad y cero lógica condicional.
 
-Para no complicar el caso simple (precio único, típico en calzado de adulto), se agrega el flag `products.has_size_pricing`:
-
-- **`FALSE`** (por defecto): el admin ingresa un solo precio al crear el modelo → el backend lo copia a cada talla que se registre.
-- **`TRUE`**: el admin ingresa el precio individualmente en cada talla.
-
-Este flag es solo una ayuda para el formulario del front — no cambia cómo se lee el precio en ningún query.
+Para el caso simple donde todas las tallas tienen el mismo precio, el formulario de registro ofrece el control "Mismo precio para todas las tallas" a nivel de modelo: escribe el valor una sola vez y lo propaga a todas las tallas de todos los colores. Esto es solo un atajo de entrada — el front siempre envía el `purchase_price` y `sale_price` de cada talla individualmente en el payload.
 
 ### 2.3 Congelamiento de precio en cada venta
 
@@ -76,7 +71,6 @@ Este flag es solo una ayuda para el formulario del front — no cambia cómo se 
 
 ### 3.2 Catálogo e Inventario
 
-- El toggle "¿este calzado varía precio por talla?" en el front controla `products.has_size_pricing` y determina si el formulario pide un precio único o uno por talla (ver [2.2](#22-precio-a-nivel-de-talla-no-de-modelo)).
 - Las fotos se capturan **por color** (`product_variants.image_url`), vía cámara o galería. Son opcionales para permitir cargar el catálogo antes de tener las fotos.
 - Cada `product_item` tiene un `barcode` único. Escanearlo debe resolver de inmediato modelo, color, talla y precio.
 - El stock baja automáticamente al completar una venta. El front no debe permitir agregar al carrito más unidades de las disponibles. El stock nunca puede ser negativo.
@@ -125,9 +119,9 @@ Este flag es solo una ayuda para el formulario del front — no cambia cómo se 
 | id (PK)          |<------| id (PK)                |<------| id (PK)                 |<------| id (PK)                    |
 | name             |       | category_id (FK)       |       | product_id (FK)         |       | product_variant_id (FK)    |
 +------------------+       | name                   |       | color                   |       | size                       |
-                           | has_size_pricing       |       | image_url (NULLABLE)    |       | barcode (UNIQUE)           |
-                           | is_active              |       +-------------------------+       | purchase_price             |
-                           +------------------------+                                         | sale_price                 |
+                           | is_active              |       | image_url (NULLABLE)    |       | barcode (UNIQUE)           |
+                           +------------------------+       +-------------------------+       | purchase_price             |
+                                                                                              | sale_price                 |
                                                                                               | stock [CHECK >= 0]         |
                                                                                               +----------------------------+
                                                                                                             ^
@@ -192,7 +186,6 @@ Este flag es solo una ayuda para el formulario del front — no cambia cómo se 
 | `id` | INT | PK, Auto Increment | Identificador único del modelo. |
 | `category_id` | INT | FK (`categories.id`), INDEX | Categoría asociada. |
 | `name` | VARCHAR(150) | NOT NULL | Nombre del modelo (ej. *Air Runner 2000*). |
-| `has_size_pricing` | BOOLEAN | NOT NULL, DEFAULT FALSE | `TRUE` = precio por talla; `FALSE` = un solo precio para todas las tallas. Solo afecta el formulario, no cómo se lee el precio. |
 | `is_active` | BOOLEAN | DEFAULT TRUE | Estado del modelo. |
 
 ### `product_variants` (Nivel 2 — Color)
@@ -297,7 +290,6 @@ CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
-    has_size_pricing BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );

@@ -129,32 +129,22 @@
                         </div>
                     </div>
 
-                    <!-- Checkbox precio por talla -->
-                    <label class="price-per-size-checkbox" for="pricePerSizeToggle">
-                        <input type="checkbox" id="pricePerSizeToggle" name="pricePerSize">
-                        <div class="price-per-size-checkbox-text">
-                            <span>El precio cambia según la talla</span>
-                            <small>Actívalo, por ejemplo, en calzado infantil. Si no, un solo precio aplica a todas las tallas.</small>
-                        </div>
-                    </label>
-
-                    <!-- Precios únicos (visibles cuando toggle está OFF) -->
-                    <div class="price-row" id="singlePrices">
-                        <div class="form-group">
-                            <label class="form-label" for="singlePurchasePrice">Precio de compra</label>
-                            <input type="number" id="singlePurchasePrice" name="purchasePrice" placeholder="0" min="0" step="1">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="singleSalePrice">Precio de venta</label>
-                            <input type="number" id="singleSalePrice" name="salePrice" placeholder="0" min="0" step="1">
-                        </div>
-                    </div>
                 </section>
 
                 <!-- Sección: Colores y tallas -->
                 <section class="colors-section">
                     <div class="colors-section-header">
                         <h4>Colores y tallas</h4>
+                    </div>
+
+                    <!-- Mismo precio para todas las tallas (nivel modelo) -->
+                    <div class="same-stock-row" id="samePriceRow" style="display:none">
+                        <span>Mismo precio para todas las tallas:</span>
+                        <input type="number" id="samePurchasePrice" placeholder="Compra" min="0" step="1"
+                            aria-label="Precio de compra para todas las tallas">
+                        <input type="number" id="sameSalePrice" placeholder="Venta" min="0" step="1"
+                            aria-label="Precio de venta para todas las tallas">
+                        <button type="button" id="btnApplySamePrice">Aplicar</button>
                     </div>
                     <div class="color-list" id="colorList">
                         <!-- Las tarjetas de color se generan por JS -->

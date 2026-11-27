@@ -3,7 +3,6 @@
     "id": 1,
     "name": "Air Runner 2000",
     "category_id": 1,
-    "has_size_pricing": false,
     "variants": [
       {
         "color": "Negro / Rojo",
@@ -28,7 +27,6 @@
     "id": 2,
     "name": "Botín de Cuero Classic",
     "category_id": 2,
-    "has_size_pricing": false,
     "variants": [
       {
         "color": "Marrón",
@@ -44,7 +42,6 @@
     "id": 3,
     "name": "Sandalia Verano",
     "category_id": 4,
-    "has_size_pricing": true,
     "variants": [
       {
         "color": "Beige",

@@ -2,15 +2,15 @@
  * logica-registro-calzado.js  (version: event delegation ONLY)
  * Modal form to register footwear (3 levels: product → variant (color) → item (size)).
  *
- * Compared with the original file, the ONLY behavioral/structural change is:
- *   - `adjuntarEventosCard` (per-element listeners, re-attached on every render) is gone.
- *   - The color list has ONE listener per event type (click, input, change) that dispatches
- *     by `data-action` / `data-field`, so cards and chips can be re-rendered or added
- *     without re-binding anything.
- * Everything else (full-card re-render, validation, payload, texts) is kept as it was.
- *
  * Identifiers, HTML ids, CSS class names and data-attributes are all in English
  * (the contract with inventario.html and styles.css). Only user-facing texts are in Spanish.
+ *
+ * Key design decisions:
+ * - Prices always live per size (purchase_price / sale_price on each item).
+ * - "Mismo precio para todas" (#samePriceRow) is a model-level shortcut that writes
+ *   the same value into every size row of every color without re-rendering the cards.
+ * - One listener per event type on #colorList (delegated); #btnApplySamePrice uses
+ *   a normal listener since it is outside #colorList.
  */
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -56,9 +56,6 @@ const CATEGORIES = [
  * @typedef {{
  *   name: string,
  *   categoryId: number|null,
- *   hasSizePricing: boolean,
- *   buy: string,
- *   sell: string,
  *   variants: Variant[]
  * }} FormState
  */
@@ -70,9 +67,6 @@ function createInitialState() {
     return {
         name: '',
         categoryId: null,
-        hasSizePricing: false,
-        buy: '',
-        sell: '',
         variants: [createVariant()],
     };
 }
@@ -145,8 +139,6 @@ function sortSizes(sizes) {
 const modalOverlay = document.getElementById('footwearModalOverlay');
 const closeModalButton = document.getElementById('footwearModalClose');
 const openModalButton = document.getElementById('btnAddProduct');
-const pricePerSizeCheckbox = document.getElementById('pricePerSizeToggle'); // <input type="checkbox">
-const singlePriceFields = document.getElementById('singlePrices');
 const colorList = document.getElementById('colorList');
 const addColorButton = document.getElementById('btnAddColor');
 const summaryElement = document.getElementById('formSummary');
@@ -154,6 +146,12 @@ const errorListElement = document.getElementById('errorList');
 const errorItemsElement = document.getElementById('errorListItems');
 const saveButton = document.getElementById('btnSaveFootwear');
 const toastContainer = document.getElementById('toastContainer');
+
+// "Mismo precio para todas" — model-level shortcut
+const samePriceRow = document.getElementById('samePriceRow');
+const samePurchasePriceInput = document.getElementById('samePurchasePrice');
+const sameSalePriceInput = document.getElementById('sameSalePrice');
+const applysamePriceButton = document.getElementById('btnApplySamePrice');
 
 // Discard-confirmation mini-modal
 const confirmOverlay = document.getElementById('confirmOverlay');
@@ -167,6 +165,11 @@ let elementFocusedBeforeOpen = null; // button that opened the modal, to give th
 function openModal() {
     elementFocusedBeforeOpen = document.activeElement;
     formState = createInitialState();
+
+    // Clear the same-price inputs every time the modal opens
+    if (samePurchasePriceInput) samePurchasePriceInput.value = '';
+    if (sameSalePriceInput) sameSalePriceInput.value = '';
+
     renderEntireForm();
     modalOverlay.classList.add('active');
     // Initial focus on the model name
@@ -233,12 +236,16 @@ function trapFocus(event) {
     }
 }
 
-// ─── "Price per size" toggle ──────────────────────────────────────────────────
+// ─── "Mismo precio para todas" visibility ─────────────────────────────────────
 
-function updatePricingMode() {
-    const isPerSize = formState.hasSizePricing;
-    if (pricePerSizeCheckbox) pricePerSizeCheckbox.checked = isPerSize;
-    singlePriceFields.style.display = isPerSize ? 'none' : 'flex';
+/**
+ * Shows or hides #samePriceRow depending on whether the model has at least one size
+ * across all its colors. Called wherever the total size count may change.
+ */
+function updateSamePriceRowVisibility() {
+    if (!samePriceRow) return;
+    const hasSizes = formState.variants.some(variant => Object.keys(variant.sizes).length > 0);
+    samePriceRow.style.display = hasSizes ? 'flex' : 'none';
 }
 
 // ─── Footer summary ───────────────────────────────────────────────────────────
@@ -256,6 +263,7 @@ function updateSummary() {
         `<strong>${colorCount}</strong> color${colorCount !== 1 ? 'es' : ''} · ` +
         `<strong>${sizeCount}</strong> talla${sizeCount !== 1 ? 's' : ''} · ` +
         `<strong>${pairCount}</strong> par${pairCount !== 1 ? 'es' : ''}`;
+    updateSamePriceRowVisibility();
 }
 
 // ─── Full render ──────────────────────────────────────────────────────────────
@@ -264,15 +272,10 @@ function renderEntireForm() {
     // Sync model fields
     const nameInput = document.getElementById('modelName');
     const categorySelect = document.getElementById('modelCategory');
-    const buyInput = document.getElementById('singlePurchasePrice');
-    const sellInput = document.getElementById('singleSalePrice');
 
     if (nameInput) nameInput.value = formState.name;
     if (categorySelect) categorySelect.value = formState.categoryId ?? '';
-    if (buyInput) buyInput.value = formState.buy;
-    if (sellInput) sellInput.value = formState.sell;
 
-    updatePricingMode();
     renderAllColorCards();
     hideErrors();
     updateSummary();
@@ -435,35 +438,32 @@ function renderSizeSelector(variant) {
 
 // ─── Size table ───────────────────────────────────────────────────────────────
 
+/**
+ * Renders the size table for a color card.
+ * Always shows columns: Talla, Stock, Compra, Venta, Código de barras.
+ */
 function renderSizeTable(variant) {
     const sortedSizes = sortSizes(Object.keys(variant.sizes));
     if (sortedSizes.length === 0) return '';
 
-    const showPrices = formState.hasSizePricing;
-
-    const headers = showPrices
-        ? `<th>Talla</th><th>Stock</th><th>Compra</th><th>Venta</th><th>Código de barras</th>`
-        : `<th>Talla</th><th>Stock</th><th>Código de barras</th>`;
+    const headers = `<th>Talla</th><th>Stock</th><th>Compra</th><th>Venta</th><th>Código de barras</th>`;
 
     const rows = sortedSizes.map(size => {
         const item = variant.sizes[size];
-        const priceCells = showPrices
-            ? `<td><input type="number" class="table-input" value="${item.buy}"
-                    placeholder="0" min="0" step="1"
-                    aria-label="Precio compra talla ${formatSizeLabel(size)}"
-                    data-field="buy" data-variant-id="${variant.id}" data-size="${size}"></td>
-               <td><input type="number" class="table-input" value="${item.sell}"
-                    placeholder="0" min="0" step="1"
-                    aria-label="Precio venta talla ${formatSizeLabel(size)}"
-                    data-field="sell" data-variant-id="${variant.id}" data-size="${size}"></td>`
-            : '';
         return `<tr>
             <td><span class="size-tag">${formatSizeLabel(size)}</span></td>
             <td><input type="number" class="table-input" value="${item.stock}"
                     placeholder="0" min="0" step="1"
                     aria-label="Stock talla ${formatSizeLabel(size)}"
                     data-field="stock" data-variant-id="${variant.id}" data-size="${size}"></td>
-            ${priceCells}
+            <td><input type="number" class="table-input" value="${item.buy}"
+                    placeholder="0" min="0" step="1"
+                    aria-label="Precio compra talla ${formatSizeLabel(size)}"
+                    data-field="buy" data-variant-id="${variant.id}" data-size="${size}"></td>
+            <td><input type="number" class="table-input" value="${item.sell}"
+                    placeholder="0" min="0" step="1"
+                    aria-label="Precio venta talla ${formatSizeLabel(size)}"
+                    data-field="sell" data-variant-id="${variant.id}" data-size="${size}"></td>
             <td><input type="text" class="table-input" value="${item.barcode}"
                     placeholder="Código de barras"
                     aria-label="Código de barras talla ${formatSizeLabel(size)}"
@@ -472,7 +472,7 @@ function renderSizeTable(variant) {
         </tr>`;
     }).join('');
 
-    // "Same stock for all" control
+    // "Same stock for all" control (per color)
     const sameStockRow = `
         <div class="same-stock-row">
             <span>Mismo stock para todas:</span>
@@ -592,7 +592,7 @@ function toggleSize(variantId, size) {
         // Remove size
         delete variant.sizes[size];
     } else {
-        // Add size with an auto-generated barcode
+        // Add size with an auto-generated barcode; prices start empty
         variant.sizes[size] = { stock: '0', buy: '', sell: '', barcode: generateUniqueBarcode() };
     }
     rerenderCard(variantId);
@@ -640,6 +640,47 @@ function applySameStock(variantId) {
     rerenderCard(variantId);
 }
 
+// ─── "Mismo precio para todas" — model-level shortcut ────────────────────────
+
+/**
+ * Applies the values written in #samePurchasePrice and/or #sameSalePrice to every size
+ * of every color. Only replaces the field that has a valid value (> 0); skips the other.
+ * Updates the DOM inputs in place without re-rendering the cards, so focus and other
+ * field values are preserved.
+ * If both fields are empty / invalid, does nothing and focuses the first one.
+ */
+function applySamePrice() {
+    const rawBuy = parseFloat(samePurchasePriceInput?.value);
+    const rawSell = parseFloat(sameSalePriceInput?.value);
+    const applyBuy = !isNaN(rawBuy) && rawBuy > 0;
+    const applySell = !isNaN(rawSell) && rawSell > 0;
+
+    if (!applyBuy && !applySell) {
+        samePurchasePriceInput?.focus();
+        return;
+    }
+
+    for (const variant of formState.variants) {
+        for (const size of Object.keys(variant.sizes)) {
+            if (applyBuy) {
+                variant.sizes[size].buy = String(rawBuy);
+                // Update the DOM input directly to avoid losing focus / other edits
+                const buyInput = colorList.querySelector(
+                    `[data-field="buy"][data-variant-id="${variant.id}"][data-size="${size}"]`
+                );
+                if (buyInput) buyInput.value = rawBuy;
+            }
+            if (applySell) {
+                variant.sizes[size].sell = String(rawSell);
+                const sellInput = colorList.querySelector(
+                    `[data-field="sell"][data-variant-id="${variant.id}"][data-size="${size}"]`
+                );
+                if (sellInput) sellInput.value = rawSell;
+            }
+        }
+    }
+}
+
 // ─── Variant (color) operations ───────────────────────────────────────────────
 
 function duplicateVariant(variantId) {
@@ -651,6 +692,7 @@ function duplicateVariant(variantId) {
     for (const [size, item] of Object.entries(original.sizes)) {
         const barcode = generateBarcodeAvoiding(usedBarcodes);
         usedBarcodes.add(barcode);
+        // Keep prices; reset stock to 0 and generate new barcodes
         copiedSizes[size] = { ...item, stock: '0', barcode };
     }
 
@@ -692,13 +734,6 @@ function validateForm() {
     if (!modelName) errors.push('El nombre del modelo es obligatorio.');
     if (!categoryId) errors.push('La categoría es obligatoria.');
 
-    if (!formState.hasSizePricing) {
-        const buy = parseFloat(document.getElementById('singlePurchasePrice')?.value);
-        const sell = parseFloat(document.getElementById('singleSalePrice')?.value);
-        if (!buy || buy <= 0) errors.push('El precio de compra debe ser mayor a 0.');
-        if (!sell || sell <= 0) errors.push('El precio de venta debe ser mayor a 0.');
-    }
-
     if (formState.variants.length === 0) {
         errors.push('Debe agregar al menos un color.');
     }
@@ -719,7 +754,7 @@ function validateForm() {
         }
     });
 
-    // Sizes and fields per color
+    // Sizes, prices and barcodes per color
     const seenBarcodes = new Set();
     for (const variant of formState.variants) {
         const colorName = getColorNameInput(variant.id)?.value.trim() || `(sin nombre)`;
@@ -739,12 +774,11 @@ function validateForm() {
                 errors.push(`${label}: el stock debe ser un número entero ≥ 0.`);
             }
 
-            if (formState.hasSizePricing) {
-                const buy = parseFloat(item.buy);
-                const sell = parseFloat(item.sell);
-                if (!buy || buy <= 0) errors.push(`${label}: falta precio de compra.`);
-                if (!sell || sell <= 0) errors.push(`${label}: falta precio de venta.`);
-            }
+            // Prices are always required per size
+            const buy = parseFloat(item.buy);
+            const sell = parseFloat(item.sell);
+            if (!buy || buy <= 0) errors.push(`${label}: falta precio de compra.`);
+            if (!sell || sell <= 0) errors.push(`${label}: falta precio de venta.`);
 
             if (!item.barcode) {
                 errors.push(`${label}: falta código de barras.`);
@@ -776,8 +810,6 @@ function hideErrors() {
 function buildPayload() {
     const modelName = document.getElementById('modelName')?.value.trim();
     const categoryId = parseInt(document.getElementById('modelCategory')?.value);
-    const singleBuy = parseFloat(document.getElementById('singlePurchasePrice')?.value) || 0;
-    const singleSell = parseFloat(document.getElementById('singleSalePrice')?.value) || 0;
 
     const variants = formState.variants.map(variant => {
         const colorName = getColorNameInput(variant.id)?.value.trim() || '';
@@ -786,8 +818,8 @@ function buildPayload() {
             return {
                 size,
                 barcode: item.barcode,
-                purchase_price: formState.hasSizePricing ? parseFloat(item.buy) : singleBuy,
-                sale_price: formState.hasSizePricing ? parseFloat(item.sell) : singleSell,
+                purchase_price: parseFloat(item.buy),
+                sale_price: parseFloat(item.sell),
                 stock: parseInt(item.stock) || 0,
             };
         });
@@ -801,7 +833,6 @@ function buildPayload() {
     return {
         name: modelName,
         category_id: categoryId,
-        has_size_pricing: formState.hasSizePricing,
         variants,
     };
 }
@@ -833,8 +864,8 @@ function saveFootwear() {
 
     hideErrors();
     const payload = buildPayload();
-    console.log("payload")
-    console.log(payload)
+    console.log("payload");
+    console.log(payload);
     // No backend: simulate saving and add a row to the inventory table
     console.log('[ShoeStock] Payload a enviar a POST /api/products:', JSON.stringify(payload, null, 2));
     appendRowsToInventoryTable(payload);
@@ -901,14 +932,6 @@ modalOverlay?.addEventListener('click', event => {
     if (event.target === modalOverlay) requestCloseModal();
 });
 
-// "Price per size" checkbox
-pricePerSizeCheckbox?.addEventListener('change', () => {
-    formState.hasSizePricing = pricePerSizeCheckbox.checked;
-    updatePricingMode();
-    // Re-render every card to show/hide the price columns
-    renderAllColorCards();
-});
-
 // Add color
 addColorButton?.addEventListener('click', () => {
     const variant = createVariant();
@@ -918,6 +941,9 @@ addColorButton?.addEventListener('click', () => {
     updateSummary();
     getColorNameInput(variant.id)?.focus();
 });
+
+// "Mismo precio para todas" — normal listener (outside #colorList)
+applysamePriceButton?.addEventListener('click', applySamePrice);
 
 // Color list: the three delegated listeners (this replaces every per-card listener)
 colorList.addEventListener('click', handleColorListClick);
