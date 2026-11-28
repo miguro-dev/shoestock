@@ -1004,8 +1004,8 @@ function syncSavedProduct() {
     const row = document.querySelector(`[data-product-id="${updated.id}"]`)?.closest('tr');
     if (row) {
         const categoryName = CATEGORIES.find(c => c.id === category_id)?.name ?? `Categoría ${category_id}`;
-        row.cells[0].textContent = escapeHtml(name);
-        row.cells[1].textContent = escapeHtml(categoryName);
+        row.cells[0].textContent = name;
+        row.cells[1].textContent = categoryName;
     }
 }
 
