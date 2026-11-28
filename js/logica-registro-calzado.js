@@ -183,6 +183,7 @@ function openModal() {
         document.getElementById('modelName')?.focus();
     });
     document.addEventListener('keydown', trapFocus);
+    applyModeToModal();
 }
 
 function mapProductToFormState(product) {
@@ -221,12 +222,15 @@ function openModalWithProduct(product, mode, trigger) {
     renderEntireForm();
     modalOverlay.classList.add('active');
     requestAnimationFrame(() => {
-        document.getElementById('modelName')?.focus();
+        const focusTarget = currentMode === 'view' ? 'btnSwitchToEdit' : 'modelName';
+        document.getElementById(focusTarget)?.focus();
     });
     document.addEventListener('keydown', trapFocus);
+    applyModeToModal();
 }
 
 function requestCloseModal() {
+    if (currentMode === 'view') { closeModal(); return; }
     if (formHasData()) {
         confirmOverlay.classList.add('active');
         confirmDiscardButton.focus();
@@ -547,6 +551,7 @@ function rerenderCard(variantId) {
     if (!existingCard) return;
     // No listeners to re-attach: the delegated ones on #colorList keep working.
     colorList.replaceChild(createColorCard(variant), existingCard);
+    applyModeToModal();
     updateSummary();
 }
 
@@ -1053,6 +1058,45 @@ fetch('../data/inventario.json')
         });
     });
 
+// ─── Mode management ─────────────────────────────────────────────────────────
+
+function applyModeToModal() {
+    const modal = document.querySelector('.footwear-modal');
+    modal.dataset.mode = currentMode;
+
+    const titles = { create: 'Registrar calzado', view: 'Detalle del calzado', edit: 'Editar calzado' };
+    const titleEl = document.getElementById('footwearModalTitle');
+    if (titleEl) titleEl.textContent = titles[currentMode] ?? titles.create;
+
+    const saveBtn = document.getElementById('btnSaveFootwear');
+    const switchBtn = document.getElementById('btnSwitchToEdit');
+    if (currentMode === 'view') {
+        saveBtn?.setAttribute('hidden', '');
+        switchBtn?.removeAttribute('hidden');
+    } else {
+        saveBtn?.removeAttribute('hidden');
+        switchBtn?.setAttribute('hidden', '');
+    }
+
+    const body = document.querySelector('.footwear-modal-body');
+    if (!body) return;
+    const focusables = body.querySelectorAll('input, select, button, textarea');
+    if (currentMode === 'view') {
+        focusables.forEach(el => {
+            if (el.dataset.action === 'toggle-expanded') return;
+            el.disabled = true;
+        });
+    } else {
+        focusables.forEach(el => { el.disabled = false; });
+    }
+}
+
+function switchToEditMode() {
+    currentMode = 'edit';
+    applyModeToModal();
+    document.getElementById('modelName')?.focus();
+}
+
 // ─── Global event listeners ───────────────────────────────────────────────────
 
 // Open modal
@@ -1093,3 +1137,5 @@ confirmKeepEditingButton?.addEventListener('click', () => {
     document.getElementById('modelName')?.focus();
 });
 confirmDiscardButton?.addEventListener('click', closeModal);
+
+document.getElementById('btnSwitchToEdit')?.addEventListener('click', switchToEditMode);
