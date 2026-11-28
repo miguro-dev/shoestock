@@ -425,7 +425,8 @@ function createColorCard(variant) {
                         stroke-linejoin="round">
                         <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
                     </svg>
-                </button>            </div>
+                </button>
+            </div>
         </div>
 
         <div class="color-card-body">
@@ -1203,7 +1204,6 @@ function applyModeToModal() {
     const focusables = body.querySelectorAll('input, select, button, textarea');
     if (currentMode === 'view') {
         focusables.forEach(el => {
-            if (el.dataset.action === 'toggle-expanded') return;
             el.disabled = true;
         });
     } else {
