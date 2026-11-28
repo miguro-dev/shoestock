@@ -973,6 +973,42 @@ function buildPayload() {
     };
 }
 
+// ─── Sync saved product ───────────────────────────────────────────────────────
+
+function syncSavedProduct() {
+    const nameInput = document.getElementById('modelName');
+    const categorySelect = document.getElementById('modelCategory');
+    const name = nameInput?.value.trim() ?? currentProduct.name;
+    const category_id = parseInt(categorySelect?.value) || currentProduct.category_id;
+
+    const variants = formState.variants.map(variant => ({
+        id: variant.serverId,
+        color: variant.color,
+        image_url: variant.originalImageUrl ?? null,
+        items: Object.entries(variant.sizes).map(([size, item]) => ({
+            id: item.serverId,
+            size,
+            barcode: item.barcode,
+            purchase_price: Number(item.buy),
+            sale_price: Number(item.sell),
+            stock: parseInt(item.stock) || 0,
+        })),
+    }));
+
+    const updated = { ...currentProduct, name, category_id, variants };
+    currentProduct = updated;
+    const idx = products.findIndex(p => p.id === updated.id);
+    if (idx !== -1) products[idx] = updated;
+
+    // Update the table row text (name + category)
+    const row = document.querySelector(`[data-product-id="${updated.id}"]`)?.closest('tr');
+    if (row) {
+        const categoryName = CATEGORIES.find(c => c.id === category_id)?.name ?? `Categoría ${category_id}`;
+        row.cells[0].textContent = escapeHtml(name);
+        row.cells[1].textContent = escapeHtml(categoryName);
+    }
+}
+
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
 function showToast(message, type = 'success') {
@@ -1016,6 +1052,7 @@ function saveFootwear() {
             }
             variant.originalImageUrl = variant.imagePreview;
         }
+        syncSavedProduct();
         initialSnapshot = getFormSnapshot();
         currentMode = 'view';
         applyModeToModal();
