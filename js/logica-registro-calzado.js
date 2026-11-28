@@ -907,6 +907,45 @@ function buildPayload() {
     const modelName = document.getElementById('modelName')?.value.trim();
     const categoryId = parseInt(document.getElementById('modelCategory')?.value);
 
+    if (currentMode === 'edit') {
+        const variants = formState.variants.map(variant => {
+            const colorName = getColorNameInput(variant.id)?.value.trim() || '';
+            const items = sortSizes(Object.keys(variant.sizes)).map(size => {
+                const item = variant.sizes[size];
+                const base = {
+                    size,
+                    barcode: item.barcode,
+                    purchase_price: parseFloat(item.buy),
+                    sale_price: parseFloat(item.sell),
+                };
+                if (item.serverId) {
+                    base.id = item.serverId;
+                    const currentStock = parseInt(item.stock) || 0;
+                    if (currentStock !== item.originalStock) {
+                        base.stock = currentStock;
+                        base.expected_stock = item.originalStock;
+                    }
+                } else {
+                    base.stock = parseInt(item.stock) || 0;
+                }
+                return base;
+            });
+            const variantPayload = {
+                color: colorName,
+                image_url: variant.imageFile ? null : variant.originalImageUrl ?? null,
+                items,
+            };
+            if (variant.serverId) variantPayload.id = variant.serverId;
+            return variantPayload;
+        });
+        return {
+            id: currentProduct.id,
+            name: modelName,
+            category_id: categoryId,
+            variants,
+        };
+    }
+
     const variants = formState.variants.map(variant => {
         const colorName = getColorNameInput(variant.id)?.value.trim() || '';
         const items = sortSizes(Object.keys(variant.sizes)).map(size => {
@@ -960,6 +999,29 @@ function saveFootwear() {
 
     hideErrors();
     const payload = buildPayload();
+
+    if (currentMode === 'edit') {
+        console.log('[ShoeStock] Payload a enviar a PUT /api/products/' + currentProduct.id + ':', JSON.stringify(payload, null, 2));
+        // Simulate success: stamp serverIds on new variants/items and update originalStock/originalImageUrl
+        for (const variant of formState.variants) {
+            if (!variant.serverId) {
+                variant.serverId = crypto.randomUUID(); // local stand-in until real backend assigns one
+            }
+            for (const item of Object.values(variant.sizes)) {
+                if (!item.serverId) {
+                    item.serverId = crypto.randomUUID();
+                }
+                item.originalStock = parseInt(item.stock) || 0;
+            }
+            variant.originalImageUrl = variant.imagePreview;
+        }
+        initialSnapshot = getFormSnapshot();
+        currentMode = 'view';
+        applyModeToModal();
+        showToast('Cambios guardados exitosamente');
+        return;
+    }
+
     console.log("payload");
     console.log(payload);
     // No backend: simulate saving and add a row to the inventory table
@@ -967,6 +1029,13 @@ function saveFootwear() {
     appendRowsToInventoryTable(payload);
     closeModal();
     showToast('Calzado registrado exitosamente');
+}
+
+// TODO: invocar cuando exista el backend (409 STOCK_CHANGED)
+function showBackendError(error) {
+    if (error.code === 'STOCK_CHANGED') {
+        showErrors(['El stock cambió mientras editabas. Cierra y vuelve a abrir el producto para ver los datos actuales.']);
+    }
 }
 
 /** Agrega una fila al inventario visible luego de guardar un producto. */
