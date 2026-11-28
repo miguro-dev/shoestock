@@ -371,7 +371,8 @@ function createColorCard(variant) {
             <!-- Actions -->
             <div class="color-actions">
                 <button type="button" class="btn-icon-sm" title="Duplicar color"
-                    aria-label="Duplicar color" data-action="duplicate-color" data-variant-id="${variant.id}">
+                    aria-label="Duplicar color" data-action="duplicate-color" data-variant-id="${variant.id}"
+                    ${variant.serverId ? 'hidden' : ''}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -380,14 +381,14 @@ function createColorCard(variant) {
                     </svg>
                 </button>
                 <button type="button" class="btn-icon-sm danger" title="Quitar color"
-                    aria-label="Quitar color" data-action="remove-color" data-variant-id="${variant.id}">
+                    aria-label="Quitar color" data-action="remove-color" data-variant-id="${variant.id}"
+                    ${variant.serverId ? 'hidden' : ''}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
                         <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
                     </svg>
-                </button>
-            </div>
+                </button>            </div>
         </div>
 
         <div class="color-card-body">
@@ -432,8 +433,10 @@ function renderSizeSelector(variant) {
     const wholeChips = wholeSizesToShow.map(size => {
         const key = String(size);
         const isActive = selectedSizes.has(key);
+        const isLocked = isActive && !!variant.sizes[key]?.serverId;
         return `<button type="button" class="size-chip"
-            aria-pressed="${isActive}" data-action="toggle-size" data-variant-id="${variant.id}" data-size="${key}"
+            aria-pressed="${isActive}" data-action="${isLocked ? '' : 'toggle-size'}" data-variant-id="${variant.id}" data-size="${key}"
+            ${isLocked ? 'disabled aria-disabled="true"' : ''}
             aria-label="Talla ${key}">${key}</button>`;
     }).join('');
 
@@ -441,8 +444,10 @@ function renderSizeSelector(variant) {
     const halfChips = halfSizeBasesToShow.map(size => {
         const key = `${size}.5`;
         const isActive = selectedSizes.has(key);
+        const isLocked = isActive && !!variant.sizes[key]?.serverId;
         return `<button type="button" class="size-chip"
-            aria-pressed="${isActive}" data-action="toggle-size" data-variant-id="${variant.id}" data-size="${key}"
+            aria-pressed="${isActive}" data-action="${isLocked ? '' : 'toggle-size'}" data-variant-id="${variant.id}" data-size="${key}"
+            ${isLocked ? 'disabled aria-disabled="true"' : ''}
             aria-label="Talla ${size} y medio">${formatSizeLabel(key)}</button>`;
     }).join('');
 
@@ -519,7 +524,7 @@ function renderSizeTable(variant) {
                     placeholder="Código de barras"
                     aria-label="Código de barras talla ${formatSizeLabel(size)}"
                     data-field="barcode" data-variant-id="${variant.id}" data-size="${size}"
-                    maxlength="50"></td>
+                    maxlength="50" ${item.serverId ? 'readonly' : ''}></td>
         </tr>`;
     }).join('');
 
@@ -642,6 +647,7 @@ function toggleSize(variantId, size) {
 
     if (variant.sizes[size]) {
         // Remove size
+        if (variant.sizes[size].serverId) return; // existing items cannot be removed in edit mode
         delete variant.sizes[size];
     } else {
         // Add size with an auto-generated barcode; prices start empty
@@ -770,6 +776,7 @@ function duplicateVariant(variantId) {
 }
 
 function removeVariant(variantId) {
+    if (findVariant(variantId)?.serverId) return; // existing variants cannot be removed in edit mode
     if (formState.variants.length === 1) return; // there must always be at least one
     formState.variants = formState.variants.filter(variant => variant.id !== variantId);
     getCardElement(variantId)?.remove();
@@ -1083,6 +1090,7 @@ function applyModeToModal() {
     const focusables = body.querySelectorAll('input, select, button, textarea');
     if (currentMode === 'view') {
         focusables.forEach(el => {
+            if (el.dataset.action === 'toggle-expanded') return;
             el.disabled = true;
         });
     } else {
