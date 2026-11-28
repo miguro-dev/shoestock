@@ -1083,7 +1083,6 @@ function applyModeToModal() {
     const focusables = body.querySelectorAll('input, select, button, textarea');
     if (currentMode === 'view') {
         focusables.forEach(el => {
-            if (el.dataset.action === 'toggle-expanded') return;
             el.disabled = true;
         });
     } else {
