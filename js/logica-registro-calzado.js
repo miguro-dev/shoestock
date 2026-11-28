@@ -1238,7 +1238,7 @@ function cancelDeleteConfirm() {
     confirmOverlay.classList.remove('active');
     document.removeEventListener('keydown', trapDeleteConfirmFocus);
     const fallback = document.getElementById('btnAddProduct');
-    (deleteTrigger?.closest('tr') ? deleteTrigger : fallback)?.focus();
+    (deleteTrigger?.isConnected ? deleteTrigger : fallback)?.focus();
     deleteTrigger = null;
 }
 
@@ -1262,7 +1262,7 @@ function deactivateProduct(product) {
     if (inArray) inArray.is_active = false;
     document.querySelector(`[data-product-id="${product.id}"]`)?.closest('tr')?.remove();
     const fallback = document.getElementById('btnAddProduct');
-    (deleteTrigger?.closest('tr') ? deleteTrigger : fallback)?.focus();
+    (deleteTrigger?.isConnected ? deleteTrigger : fallback)?.focus();
     deleteTrigger = null;
     showToast('Calzado eliminado');
 }
