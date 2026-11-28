@@ -1046,7 +1046,7 @@ fetch('../data/inventario.json')
             const { action, productId } = button.dataset;
             if (action === 'delete') return;
 
-            const producto = products.find(p => p.id === productId);
+            const producto = products.find(p => String(p.id) === productId);
             if (!producto) return;
 
             openModalWithProduct(structuredClone(producto), action === 'view' ? 'view' : 'edit', button);
