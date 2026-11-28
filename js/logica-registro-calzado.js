@@ -63,6 +63,9 @@ const CATEGORIES = [
 /** @type {FormState} */
 let formState = createInitialState();
 
+let currentMode = 'create';    // 'create' | 'view' | 'edit'
+let currentProduct = null;     // product object from the JSON / products array, or null
+
 function createInitialState() {
     return {
         name: '',
@@ -163,6 +166,9 @@ const confirmDiscardButton = document.getElementById('confirmDiscard');
 let elementFocusedBeforeOpen = null; // button that opened the modal, to give the focus back
 
 function openModal() {
+    currentMode = 'create';
+    currentProduct = null;
+    document.querySelector('.footwear-modal').dataset.mode = 'create';
     elementFocusedBeforeOpen = document.activeElement;
     formState = createInitialState();
 
@@ -173,6 +179,47 @@ function openModal() {
     renderEntireForm();
     modalOverlay.classList.add('active');
     // Initial focus on the model name
+    requestAnimationFrame(() => {
+        document.getElementById('modelName')?.focus();
+    });
+    document.addEventListener('keydown', trapFocus);
+}
+
+function mapProductToFormState(product) {
+    const variants = product.variants.map(serverVariant => {
+        const variant = createVariant();
+        variant.color = serverVariant.color;
+        variant.serverId = serverVariant.id;
+        variant.imagePreview = serverVariant.image_url;
+        variant.originalImageUrl = serverVariant.image_url;
+        for (const item of serverVariant.items) {
+            variant.sizes[item.size] = {
+                stock: String(item.stock),
+                buy: String(item.purchase_price),
+                sell: String(item.sale_price),
+                barcode: item.barcode,
+                serverId: item.id,
+                originalStock: item.stock,
+            };
+        }
+        return variant;
+    });
+    return { name: product.name, categoryId: product.category_id, variants };
+}
+
+function openModalWithProduct(product, mode, trigger) {
+    elementFocusedBeforeOpen = trigger;
+    currentMode = mode;
+    currentProduct = product;
+    document.querySelector('.footwear-modal').dataset.mode = mode;
+    formState = mapProductToFormState(product);
+
+    // Clear the same-price inputs every time the modal opens
+    if (samePurchasePriceInput) samePurchasePriceInput.value = '';
+    if (sameSalePriceInput) sameSalePriceInput.value = '';
+
+    renderEntireForm();
+    modalOverlay.classList.add('active');
     requestAnimationFrame(() => {
         document.getElementById('modelName')?.focus();
     });
