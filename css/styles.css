@@ -1165,3 +1165,23 @@ main> :nth-child(1) {
         gap: 0.5rem;
     }
 }
+
+/* ─── Modo view: controles ocultos ─── */
+.footwear-modal[data-mode="view"] #btnAddColor,
+.footwear-modal[data-mode="view"] #samePriceRow {
+    display: none !important;
+}
+
+.footwear-modal[data-mode="view"] [data-action="remove-color"],
+.footwear-modal[data-mode="view"] [data-action="duplicate-color"] {
+    display: none !important;
+}
+
+/* ─── Modo view: campos deshabilitados con aspecto de habilitados ─── */
+.footwear-modal[data-mode="view"] :disabled {
+    opacity: 1;
+    cursor: default;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
