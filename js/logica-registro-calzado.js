@@ -65,6 +65,8 @@ let formState = createInitialState();
 
 let currentMode = 'create';    // 'create' | 'view' | 'edit'
 let currentProduct = null;     // product object from the JSON / products array, or null
+let initialSnapshot = '';      // JSON snapshot of the form state at open/save time
+let confirmAction = closeModal; // function to call when the user confirms discard
 
 function createInitialState() {
     return {
@@ -227,13 +229,47 @@ function openModalWithProduct(product, mode, trigger) {
     });
     document.addEventListener('keydown', trapFocus);
     applyModeToModal();
+    initialSnapshot = getFormSnapshot();
+}
+
+function getFormSnapshot() {
+    return JSON.stringify({
+        name: document.getElementById('modelName')?.value ?? '',
+        categoryId: document.getElementById('modelCategory')?.value ?? '',
+        variants: formState.variants.map(variant => ({
+            color: variant.color,
+            imagePreview: variant.imagePreview,
+            sizes: Object.fromEntries(
+                Object.entries(variant.sizes).map(([size, item]) => [
+                    size,
+                    { stock: item.stock, buy: item.buy, sell: item.sell, barcode: item.barcode },
+                ])
+            ),
+        })),
+    });
+}
+
+function openConfirm({ title, text, keepLabel, okLabel, onOk }) {
+    document.querySelector('#confirmOverlay h4').textContent = title;
+    document.querySelector('#confirmOverlay p').textContent = text;
+    confirmKeepEditingButton.textContent = keepLabel;
+    confirmDiscardButton.textContent = okLabel;
+    confirmAction = onOk;
+    confirmOverlay.classList.add('active');
+    confirmDiscardButton.focus();
 }
 
 function requestCloseModal() {
     if (currentMode === 'view') { closeModal(); return; }
     if (formHasData()) {
-        confirmOverlay.classList.add('active');
-        confirmDiscardButton.focus();
+        const isEdit = currentMode === 'edit';
+        openConfirm({
+            title: isEdit ? '¿Descartar los cambios?' : '¿Descartar el registro?',
+            text: isEdit ? 'Perderás los cambios que no has guardado.' : 'Perderás todos los datos ingresados. Esta acción no se puede deshacer.',
+            keepLabel: 'Seguir editando',
+            okLabel: 'Sí, descartar',
+            onOk: closeModal,
+        });
     } else {
         closeModal();
     }
@@ -247,6 +283,7 @@ function closeModal() {
 }
 
 function formHasData() {
+    if (currentMode === 'edit') return getFormSnapshot() !== initialSnapshot;
     const modelName = document.getElementById('modelName')?.value.trim();
     if (modelName) return true;
     for (const variant of formState.variants) {
@@ -1077,12 +1114,19 @@ function applyModeToModal() {
 
     const saveBtn = document.getElementById('btnSaveFootwear');
     const switchBtn = document.getElementById('btnSwitchToEdit');
+    const cancelBtn = document.getElementById('btnCancelEdit');
     if (currentMode === 'view') {
         saveBtn?.setAttribute('hidden', '');
         switchBtn?.removeAttribute('hidden');
+        cancelBtn?.setAttribute('hidden', '');
+    } else if (currentMode === 'edit') {
+        saveBtn?.removeAttribute('hidden');
+        switchBtn?.setAttribute('hidden', '');
+        cancelBtn?.removeAttribute('hidden');
     } else {
         saveBtn?.removeAttribute('hidden');
         switchBtn?.setAttribute('hidden', '');
+        cancelBtn?.setAttribute('hidden', '');
     }
 
     const body = document.querySelector('.footwear-modal-body');
@@ -1102,6 +1146,14 @@ function switchToEditMode() {
     currentMode = 'edit';
     applyModeToModal();
     document.getElementById('modelName')?.focus();
+}
+
+function loadProductIntoView() {
+    formState = mapProductToFormState(currentProduct);
+    currentMode = 'view';
+    renderEntireForm();
+    applyModeToModal();
+    initialSnapshot = getFormSnapshot();
 }
 
 // ─── Global event listeners ───────────────────────────────────────────────────
@@ -1143,6 +1195,20 @@ confirmKeepEditingButton?.addEventListener('click', () => {
     confirmOverlay.classList.remove('active');
     document.getElementById('modelName')?.focus();
 });
-confirmDiscardButton?.addEventListener('click', closeModal);
+confirmDiscardButton?.addEventListener('click', () => confirmAction());
 
 document.getElementById('btnSwitchToEdit')?.addEventListener('click', switchToEditMode);
+
+document.getElementById('btnCancelEdit')?.addEventListener('click', () => {
+    if (getFormSnapshot() === initialSnapshot) {
+        loadProductIntoView();
+    } else {
+        openConfirm({
+            title: '¿Descartar los cambios?',
+            text: 'Perderás los cambios que no has guardado.',
+            keepLabel: 'Seguir editando',
+            okLabel: 'Sí, descartar',
+            onOk: loadProductIntoView,
+        });
+    }
+});
