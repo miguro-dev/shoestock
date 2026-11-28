@@ -991,32 +991,65 @@ const SVG_ELIMINAR = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height=
     <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
 </svg>`;
 
+let products = [];
+
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 fetch('../data/inventario.json')
     .then(response => response.json())
-    .then(productos => {
+    .then(productosJson => {
+        products = productosJson;
         const tbody = document.querySelector('.table-section table tbody');
         tbody.innerHTML = '';
 
-        productos.forEach(producto => {
-            const categoriaNombre = CATEGORIES.find(c => c.id === producto.category_id)?.name ?? `Categoría ${producto.category_id}`;
+        products.forEach(producto => {
+            if (producto.is_active === false) return;
+
+            const categoriaNombre = escapeHtml(
+                CATEGORIES.find(c => c.id === producto.category_id)?.name ?? `Categoría ${producto.category_id}`
+            );
+            const nombreEscapado = escapeHtml(producto.name);
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${producto.name}</td>
+                <td>${nombreEscapado}</td>
                 <td>${categoriaNombre}</td>
                 <td class="actions-cell">
-                    <button class="btn-icon-sm" title="Ver detalle" aria-label="Ver detalle de ${producto.name}">
+                    <button class="btn-icon-sm" title="Ver detalle" aria-label="Ver detalle de ${nombreEscapado}"
+                        data-action="view" data-product-id="${producto.id}">
                         ${SVG_VER}
                     </button>
-                    <button class="btn-icon-sm" title="Editar" aria-label="Editar ${producto.name}">
+                    <button class="btn-icon-sm" title="Editar" aria-label="Editar ${nombreEscapado}"
+                        data-action="edit" data-product-id="${producto.id}">
                         ${SVG_EDITAR}
                     </button>
-                    <button class="btn-icon-sm danger" title="Eliminar" aria-label="Eliminar ${producto.name}">
+                    <button class="btn-icon-sm danger" title="Eliminar" aria-label="Eliminar ${nombreEscapado}"
+                        data-action="delete" data-product-id="${producto.id}">
                         ${SVG_ELIMINAR}
                     </button>
                 </td>
             `;
             tbody.appendChild(tr);
+        });
+
+        tbody.addEventListener('click', event => {
+            const button = event.target.closest('[data-action][data-product-id]');
+            if (!button) return;
+
+            const { action, productId } = button.dataset;
+            if (action === 'delete') return;
+
+            const producto = products.find(p => p.id === productId);
+            if (!producto) return;
+
+            openModalWithProduct(structuredClone(producto), action === 'view' ? 'view' : 'edit', button);
         });
     });
 
