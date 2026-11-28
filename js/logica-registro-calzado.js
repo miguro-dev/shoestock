@@ -1163,14 +1163,72 @@ fetch('../data/inventario.json')
             if (!button) return;
 
             const { action, productId } = button.dataset;
-            if (action === 'delete') return;
 
             const producto = products.find(p => String(p.id) === productId);
             if (!producto) return;
 
+            if (action === 'delete') {
+                requestDeleteProduct(producto, button);
+                return;
+            }
+
             openModalWithProduct(structuredClone(producto), action === 'view' ? 'view' : 'edit', button);
         });
     });
+
+// ─── Delete product ───────────────────────────────────────────────────────────
+
+let deleteTrigger = null; // button that triggered the delete confirm, to restore focus
+
+function trapDeleteConfirmFocus(event) {
+    if (event.key === 'Escape') {
+        cancelDeleteConfirm();
+        return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusableElements = [...confirmOverlay.querySelectorAll('button:not([disabled])')];
+    if (focusableElements.length === 0) return;
+    const first = focusableElements[0];
+    const last = focusableElements[focusableElements.length - 1];
+    if (event.shiftKey) {
+        if (document.activeElement === first) { event.preventDefault(); last.focus(); }
+    } else {
+        if (document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+}
+
+function cancelDeleteConfirm() {
+    confirmOverlay.classList.remove('active');
+    document.removeEventListener('keydown', trapDeleteConfirmFocus);
+    const fallback = document.getElementById('btnAddProduct');
+    (deleteTrigger?.closest('tr') ? deleteTrigger : fallback)?.focus();
+    deleteTrigger = null;
+}
+
+function requestDeleteProduct(product, trigger) {
+    deleteTrigger = trigger;
+    openConfirm({
+        title: '¿Eliminar este calzado?',
+        text: `«${product.name}» dejará de aparecer en el inventario y en las ventas. El historial de ventas no se ve afectado.`,
+        keepLabel: 'Cancelar',
+        okLabel: 'Sí, eliminar',
+        onOk: () => deactivateProduct(product),
+    });
+    document.addEventListener('keydown', trapDeleteConfirmFocus);
+}
+
+function deactivateProduct(product) {
+    console.log('[ShoeStock] DELETE /api/products/' + product.id);
+    confirmOverlay.classList.remove('active');
+    document.removeEventListener('keydown', trapDeleteConfirmFocus);
+    const inArray = products.find(p => p.id === product.id);
+    if (inArray) inArray.is_active = false;
+    document.querySelector(`[data-product-id="${product.id}"]`)?.closest('tr')?.remove();
+    const fallback = document.getElementById('btnAddProduct');
+    (deleteTrigger?.closest('tr') ? deleteTrigger : fallback)?.focus();
+    deleteTrigger = null;
+    showToast('Calzado eliminado');
+}
 
 // ─── Mode management ─────────────────────────────────────────────────────────
 
@@ -1261,6 +1319,7 @@ saveButton?.addEventListener('click', saveFootwear);
 
 // Discard-confirmation mini-modal
 confirmKeepEditingButton?.addEventListener('click', () => {
+    if (deleteTrigger !== null) { cancelDeleteConfirm(); return; }
     confirmOverlay.classList.remove('active');
     document.getElementById('modelName')?.focus();
 });
