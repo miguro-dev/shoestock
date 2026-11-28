@@ -408,8 +408,7 @@ function createColorCard(variant) {
             <!-- Actions -->
             <div class="color-actions">
                 <button type="button" class="btn-icon-sm" title="Duplicar color"
-                    aria-label="Duplicar color" data-action="duplicate-color" data-variant-id="${variant.id}"
-                    ${variant.serverId ? 'hidden' : ''}>
+                    aria-label="Duplicar color" data-action="duplicate-color" data-variant-id="${variant.id}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -788,8 +787,9 @@ function duplicateVariant(variantId) {
     for (const [size, item] of Object.entries(original.sizes)) {
         const barcode = generateBarcodeAvoiding(usedBarcodes);
         usedBarcodes.add(barcode);
-        // Keep prices; reset stock to 0 and generate new barcodes
-        copiedSizes[size] = { ...item, stock: '0', barcode };
+        // Keep prices; reset stock to 0 and generate new barcodes; treat copy as new (no serverId)
+        const { serverId: _sid, originalStock: _os, ...rest } = item;
+        copiedSizes[size] = { ...rest, stock: '0', barcode };
     }
 
     const copy = {
